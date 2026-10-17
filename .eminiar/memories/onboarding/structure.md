@@ -4,7 +4,7 @@ kind: onboarding
 tags: [onboarding, planned]
 related: [file:src/server.ts, file:src/tools/index.ts, file:src/storage/types.ts, file:src/storage/sqlite/adapter.ts, file:src/recipes, file:src/ingest, file:src/search, file:web, file:.claude-plugin/plugin.json, file:package.json]
 created: 2026-10-17T15:49:06.943Z
-updated: 2026-10-17T16:50:36.144Z
+updated: 2026-10-17T16:55:38.854Z
 ---
 
 # pantrybase — structure (planned layout, nothing built yet as of 2026-10-17)
@@ -44,5 +44,11 @@ Two kinds of locations: the **package** (this repo) and the **per-project data d
 - `src/ingest/inbox.ts`: queue state is the folder (`inbox/` pending, `inbox/skipped|failed/` + `.reason.txt`, `images/<slug>/` done, `inbox/duplicates/` byte-identical copies); `scanInbox` rebuilds `ingest_items` from disk; `importPaths`, `nextBatch` (retake hints), `resolveItems`, `planAttach`/`finalizeAttach` (photos move only after the markdown is written).
 - Tools: `pb_ingest_source`, `pb_inbox_next`, `pb_inbox_image` (MCP image block), `pb_inbox_resolve`, `pb_inbox_list`; `pb_save_recipe {ingest:[{id, side}]}`. No claim locking (single consumer).
 - Skill `skills/ingest/SKILL.md` → `/pantrybase:ingest`.
+
+## Added in Phase 4 (2026-10-17): pantry and synthesis
+- `src/pantry/pantry.ts`: `resolveItem` (catalog alias/plural/fuzzy), pantry add/remove/list, `scoreRecipes`/`matchRecipes` — coverage over required lines (not staple, not optional); alternatives and all composite components count as "have".
+- `src/synthesis/context.ts`: `synthesisContext` picks sources (slugs → search re-ranked by pantry → pantry match → filters) and returns compact recipes + shared ingredients/pairings/techniques + pantry fit.
+- `src/ingredients/merge.ts`: rewrites recipe files, moves aliases/pantry, persists the alias into ingredients.yaml (comment-preserving `parseDocument`).
+- Tools (18 total): `pb_pantry_list/add/remove`, `pb_pantry_match`, `pb_synthesis_context`, `pb_merge_ingredients`. Skill `skills/cook/SKILL.md` → `/pantrybase:cook`.
 
 Hotspots/entry points: `em_architecture` knows them.

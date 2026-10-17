@@ -12,9 +12,11 @@ import type {
   IngestItem,
   IngestStatus,
   IngredientRow,
+  PantryItem,
   Recipe,
   RecipeRecord,
   RecipeSummary,
+  RequirementRow,
   SearchFilters,
   SearchHit,
   SourceKind,
@@ -746,6 +748,94 @@ export class SqliteAdapter implements StorageAdapter {
       vectors: one("SELECT COUNT(*) n FROM chunk_vec"),
       needs_review: one("SELECT COUNT(*) n FROM recipes WHERE needs_review = 1"),
     };
+  }
+
+  // ----------------------------------------------------------------- pantry
+
+  pantryList(): PantryItem[] {
+    return this.s(
+      `SELECT p.ingredient_id, i.canonical, p.qty, p.unit, p.note, p.added_at
+       FROM pantry_items p JOIN ingredients i ON i.id = p.ingredient_id ORDER BY i.canonical`,
+    ).all() as PantryItem[];
+  }
+
+  pantryUpsert(
+    ingredientId: number,
+    fields: { qty?: number | null; unit?: string | null; note?: string | null },
+  ): void {
+    this.s(
+      `INSERT INTO pantry_items(ingredient_id, qty, unit, note, added_at) VALUES (@id, @qty, @unit, @note, @now)
+       ON CONFLICT(ingredient_id) DO UPDATE SET
+         qty = COALESCE(excluded.qty, qty), unit = COALESCE(excluded.unit, unit), note = COALESCE(excluded.note, note)`,
+    ).run({
+      id: ingredientId,
+      qty: fields.qty ?? null,
+      unit: fields.unit ?? null,
+      note: fields.note ?? null,
+      now: new Date().toISOString(),
+    });
+  }
+
+  pantryRemove(ingredientIds: number[]): number {
+    if (ingredientIds.length === 0) return 0;
+    return this.s(
+      `DELETE FROM pantry_items WHERE ingredient_id IN (${placeholders(ingredientIds.length)})`,
+    ).run(...ingredientIds).changes;
+  }
+
+  pantryClear(): number {
+    return this.s("DELETE FROM pantry_items").run().changes;
+  }
+
+  recipeRequirements(recipeIds?: number[]): RequirementRow[] {
+    const where = recipeIds ? `WHERE ri.recipe_id IN (${placeholders(recipeIds.length)})` : "";
+    if (recipeIds && recipeIds.length === 0) return [];
+    const rows = this.s(
+      `SELECT ri.recipe_id, r.slug, r.title, ri.ingredient_id, i.canonical, ri.raw,
+              (ri.staple OR i.is_staple) AS staple, ri.optional, ri.extra
+       FROM recipe_ingredients ri
+       JOIN ingredients i ON i.id = ri.ingredient_id
+       JOIN recipes r ON r.id = ri.recipe_id
+       ${where} ORDER BY ri.recipe_id, ri.position`,
+    ).all(...(recipeIds ?? [])) as Array<
+      Omit<RequirementRow, "staple" | "optional"> & { staple: number; optional: number }
+    >;
+    return rows.map((r) => ({ ...r, staple: r.staple === 1, optional: r.optional === 1 }));
+  }
+
+  recipesUsingIngredient(ingredientId: number): string[] {
+    return (
+      this.s(
+        `SELECT DISTINCT r.slug FROM recipes r WHERE r.id IN (
+           SELECT recipe_id FROM recipe_ingredients WHERE ingredient_id = ?
+           UNION SELECT recipe_id FROM step_ingredients WHERE ingredient_id = ?)
+         ORDER BY r.slug`,
+      ).all(ingredientId, ingredientId) as Array<{ slug: string }>
+    ).map((r) => r.slug);
+  }
+
+  mergeIngredientRows(fromId: number, intoId: number): void {
+    this.transaction(() => {
+      this.s(
+        "UPDATE OR IGNORE ingredient_aliases SET ingredient_id = ? WHERE ingredient_id = ?",
+      ).run(intoId, fromId);
+      const pantry = this.s("SELECT * FROM pantry_items WHERE ingredient_id = ?").get(fromId);
+      if (pantry) {
+        this.s(
+          "INSERT OR IGNORE INTO pantry_items(ingredient_id, qty, unit, note, added_at) SELECT ?, qty, unit, note, added_at FROM pantry_items WHERE ingredient_id = ?",
+        ).run(intoId, fromId);
+      }
+      this.s(
+        "UPDATE OR IGNORE recipe_ingredients SET ingredient_id = ? WHERE ingredient_id = ?",
+      ).run(intoId, fromId);
+      this.s("UPDATE OR IGNORE step_ingredients SET ingredient_id = ? WHERE ingredient_id = ?").run(
+        intoId,
+        fromId,
+      );
+      this.s("DELETE FROM step_ingredients WHERE ingredient_id = ?").run(fromId);
+      this.s("DELETE FROM pantry_items WHERE ingredient_id = ?").run(fromId);
+      this.s("DELETE FROM ingredients WHERE id = ?").run(fromId);
+    });
   }
 
   // ------------------------------------------------------------ photo queue

@@ -26,6 +26,8 @@ export type SaveResult =
       unmatched_uses: string[];
       needs_review: boolean;
       images: string[];
+      /** derived_from slugs that don't exist (kept, but probably a typo). */
+      unknown_derived_from?: string[];
     }
   | { saved: false; already_ingested: true; slug: string }
   | { saved: false; duplicate_of: DuplicateCandidate[] }
@@ -115,7 +117,11 @@ export function saveRecipe(
   ctx.embedQueue.kick();
 
   const { provider, ...vocabulary } = prepared.report;
+  const unknownDerived = prepared.recipe.derived_from.filter(
+    (s) => s !== slug && !ctx.store.getRecipe(s),
+  );
   return {
+    ...(unknownDerived.length ? { unknown_derived_from: unknownDerived } : {}),
     saved: true,
     slug,
     file: file.file_path,

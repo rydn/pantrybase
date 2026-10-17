@@ -254,6 +254,29 @@ export interface DuplicateCandidate {
   score: number;
 }
 
+export interface PantryItem {
+  ingredient_id: number;
+  canonical: string;
+  qty: number | null;
+  unit: string | null;
+  note: string | null;
+  added_at: string;
+}
+
+/** One ingredient line of a recipe, as needed for pantry matching. */
+export interface RequirementRow {
+  recipe_id: number;
+  slug: string;
+  title: string;
+  ingredient_id: number;
+  canonical: string;
+  raw: string;
+  staple: boolean;
+  optional: boolean;
+  /** JSON {alternatives?, components?} */
+  extra: string | null;
+}
+
 export const INGEST_STATUSES = ["pending", "done", "skipped", "failed"] as const;
 export type IngestStatus = (typeof INGEST_STATUSES)[number];
 

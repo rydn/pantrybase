@@ -7,9 +7,11 @@ import type {
   IngestItem,
   IngestStatus,
   IngredientRow,
+  PantryItem,
   Recipe,
   RecipeRecord,
   RecipeSummary,
+  RequirementRow,
   SearchFilters,
   SearchHit,
   Stats,
@@ -76,6 +78,21 @@ export interface StorageAdapter {
   resetVectors(): void;
 
   stats(): Stats;
+
+  // pantry
+  pantryList(): PantryItem[];
+  pantryUpsert(
+    ingredientId: number,
+    fields: { qty?: number | null; unit?: string | null; note?: string | null },
+  ): void;
+  pantryRemove(ingredientIds: number[]): number;
+  pantryClear(): number;
+  /** Every recipe ingredient line (optionally limited to some recipes), for matching. */
+  recipeRequirements(recipeIds?: number[]): RequirementRow[];
+  /** Slugs of recipes that use an ingredient (in a line or a step). */
+  recipesUsingIngredient(ingredientId: number): string[];
+  /** Move aliases (and pantry entry) from one ingredient to another and delete the first. */
+  mergeIngredientRows(fromId: number, intoId: number): void;
 
   // photo queue
   ingestByPath(path: string): IngestItem | undefined;
