@@ -14,7 +14,9 @@
     "dist",
     "bin",
     "skills",
-    "seed",
+    "seed/ingredients.yaml",
+    "seed/vocabulary.yaml",
+    "providers",
     ".claude-plugin"
   ],
   "scripts": {

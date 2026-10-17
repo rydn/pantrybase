@@ -1,8 +1,9 @@
 import type { AppContext } from "../core/context.js";
 import { slugify, uniqueSlug } from "../files/slug.js";
 import { recipeFileExists, writeRecipeFile } from "../files/store.js";
-import { resolveIngredients } from "../ingredients/normalize.js";
 import type { DuplicateCandidate } from "../types.js";
+import type { EnrichReport } from "./enrich.js";
+import { prepareRecipe } from "./pipeline.js";
 import { normalizeName, normalizeRecipe, type RecipeInput } from "./schema.js";
 
 export interface SaveOptions {
@@ -17,10 +18,14 @@ export type SaveResult =
       updated: boolean;
       new_ingredients: string[];
       aliased: Array<{ from: string; to: string }>;
+      vocabulary: Omit<EnrichReport, "provider">;
+      provider_rules: string[];
+      unmatched_uses: string[];
+      needs_review: boolean;
     }
   | { saved: false; duplicate_of: DuplicateCandidate[] };
 
-/** Write the markdown first (source of truth), then index it. */
+/** Validate, enrich and resolve, then write the markdown (source of truth), then index it. */
 export function saveRecipe(
   ctx: AppContext,
   input: RecipeInput,
@@ -52,19 +57,23 @@ export function saveRecipe(
     },
     slug,
   );
-  const resolved = resolveIngredients(ctx.store, recipe.ingredients);
-  recipe.ingredients = resolved.ingredients;
+  const prepared = prepareRecipe(ctx, recipe);
 
-  const file = writeRecipeFile(ctx.paths, recipe);
-  ctx.store.upsertRecipe(recipe, file, resolved.ids);
+  const file = writeRecipeFile(ctx.paths, prepared.recipe);
+  ctx.store.upsertRecipe(prepared.recipe, file, prepared.ingredientIds);
   ctx.embedQueue.kick();
 
+  const { provider, ...vocabulary } = prepared.report;
   return {
     saved: true,
     slug,
     file: file.file_path,
     updated: existing !== undefined,
-    new_ingredients: resolved.created,
-    aliased: resolved.aliased.map(({ from, to }) => ({ from, to })),
+    new_ingredients: prepared.resolution.created,
+    aliased: prepared.resolution.aliased.map(({ from, to }) => ({ from, to })),
+    vocabulary,
+    provider_rules: provider,
+    unmatched_uses: prepared.unmatched_uses,
+    needs_review: prepared.recipe.extraction?.needs_review ?? false,
   };
 }

@@ -7,6 +7,9 @@ dist/
 # per-project data created when pantrybase is used inside this repo
 /pantrybase/
 
+# real recipe card photos used for local extraction testing (not redistributable)
+seed/test_scans/
+
 # eminiar: keep memories and the docs manifest, drop caches
 .eminiar/*
 !.eminiar/memories/

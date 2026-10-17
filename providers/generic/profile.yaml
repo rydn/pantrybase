@@ -1,0 +1,16 @@
+id: generic
+name: Generic recipe
+country: null
+recognise: []
+sides:
+  front: [title, photo]
+  back: [ingredients, method]
+pairing: content
+nutrition_basis: per_serving
+default_servings: null
+kitchen_section: null
+plan_labels: {}
+allergen_synonyms: {}
+brands: []
+equipment_terms: {}
+ingredient_aliases: {}

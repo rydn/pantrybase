@@ -1,0 +1,277 @@
+# Tag vocabulary. Copied to ./pantrybase/vocabulary.yaml on first use; edit that copy.
+#
+# mode: closed  — only listed values are kept; unknown tags move to `other` (allergens are kept but flagged)
+# mode: open    — new values are accepted and reported so the vocabulary can grow
+# synonyms map card wording to one value; parent builds a hierarchy (filtering on a parent matches children).
+# Values are kebab-case. Matching ignores case, accents and punctuation.
+
+diet:
+  mode: closed
+  values:
+    vegetarian: {synonyms: [veggie, veg, meat-free, meatless]}
+    vegan: {synonyms: [plant-based, plant based]}
+    vegan-adaptable: {synonyms: [vegan-option, can-be-vegan]}
+    pescatarian: {}
+    gluten-free: {synonyms: [gf]}
+    dairy-free: {synonyms: [df, lactose-free]}
+    low-carb: {synonyms: [carb-conscious, keto]}
+    high-protein: {synonyms: [protein-packed]}
+    low-calorie: {synonyms: [calorie-conscious, lean, light]}
+    halal: {}
+    family-friendly: {synonyms: [kid-friendly, family]}
+
+protein:
+  mode: open
+  values:
+    chicken: {}
+    beef: {}
+    pork: {}
+    lamb: {}
+    turkey: {}
+    duck: {}
+    venison: {synonyms: [game]}
+    fish: {}
+    salmon: {parent: fish}
+    white-fish: {parent: fish, synonyms: [hake, cod, haddock]}
+    tuna: {parent: fish}
+    seafood: {}
+    prawns: {parent: seafood, synonyms: [shrimp]}
+    egg: {synonyms: [eggs]}
+    cheese: {synonyms: [halloumi, paneer]}
+    tofu: {}
+    tempeh: {}
+    legumes: {synonyms: [beans, pulses]}
+    chickpeas: {parent: legumes, synonyms: [chickpea]}
+    lentils: {parent: legumes, synonyms: [lentil]}
+    plant-based-meat: {synonyms: [meat-alternative, plant-based-nuggets, mock-meat]}
+    falafel: {parent: legumes}
+
+starch:
+  mode: open
+  values:
+    rice: {}
+    pasta: {}
+    noodles: {}
+    potato: {synonyms: [potatoes]}
+    sweet-potato: {}
+    bread: {synonyms: [flatbread, naan, pita, sourdough]}
+    couscous: {}
+    grains: {synonyms: [quinoa, bulgur, barley, farro]}
+    polenta: {}
+    tortilla: {synonyms: [wraps]}
+    gnocchi: {}
+    none: {synonyms: [no-starch, carb-free]}
+
+flavor:
+  mode: open
+  values:
+    spicy: {synonyms: [hot, chilli, fiery]}
+    mild: {}
+    smoky: {}
+    sweet: {}
+    savoury: {synonyms: [savory]}
+    umami: {}
+    tangy: {synonyms: [sour]}
+    zesty: {synonyms: [citrusy, lemony]}
+    fresh: {}
+    herby: {synonyms: [herbaceous]}
+    garlicky: {}
+    rich: {}
+    creamy: {}
+    cheesy: {}
+    fragrant: {synonyms: [aromatic]}
+    earthy: {}
+    nutty: {}
+    peppery: {}
+    sweet-and-sour: {}
+
+texture:
+  mode: open
+  values:
+    crispy: {synonyms: [crisp]}
+    crunchy: {}
+    creamy: {}
+    silky: {synonyms: [smooth]}
+    saucy: {}
+    chewy: {}
+    tender: {}
+    hearty: {synonyms: [chunky]}
+
+cuisine:
+  mode: open
+  values:
+    asian: {}
+    east-asian: {parent: asian}
+    chinese: {parent: east-asian}
+    japanese: {parent: east-asian}
+    korean: {parent: east-asian}
+    southeast-asian: {parent: asian, synonyms: [south-east-asian]}
+    thai: {parent: southeast-asian}
+    vietnamese: {parent: southeast-asian}
+    indonesian: {parent: southeast-asian}
+    malaysian: {parent: southeast-asian}
+    south-asian: {parent: asian}
+    indian: {parent: south-asian}
+    sri-lankan: {parent: south-asian}
+    middle-eastern: {synonyms: [levantine]}
+    lebanese: {parent: middle-eastern}
+    turkish: {parent: middle-eastern}
+    persian: {parent: middle-eastern}
+    israeli: {parent: middle-eastern}
+    african: {}
+    north-african: {parent: african}
+    moroccan: {parent: north-african}
+    south-african: {parent: african, synonyms: [braai]}
+    cape-malay: {parent: south-african}
+    west-african: {parent: african}
+    east-african: {parent: african}
+    european: {}
+    mediterranean: {parent: european}
+    italian: {parent: mediterranean}
+    greek: {parent: mediterranean}
+    spanish: {parent: mediterranean}
+    french: {parent: european}
+    british: {parent: european}
+    german: {parent: european}
+    portuguese: {parent: european}
+    american: {}
+    mexican: {parent: american, synonyms: [tex-mex]}
+    southern-us: {parent: american, synonyms: [cajun, creole]}
+    latin-american: {parent: american}
+    caribbean: {parent: american}
+    fusion: {}
+
+dish:
+  mode: closed
+  values:
+    curry: {synonyms: [dhal, dal, korma, masala]}
+    stew: {synonyms: [tagine, casserole, chilli-con-carne]}
+    soup: {synonyms: [broth, ramen-soup, chowder]}
+    salad: {}
+    bowl: {synonyms: [buddha-bowl, grain-bowl, poke, rice-bowl]}
+    pasta: {synonyms: [spaghetti, tagliatelle, penne, linguine]}
+    pasta-bake: {synonyms: [baked-pasta, lasagne, lasagna, mac-and-cheese]}
+    stuffed-pasta: {synonyms: [ravioli, tortellini, stuffed-shells, cannelloni]}
+    risotto: {}
+    noodles: {synonyms: [stir-fried-noodles, pad-thai, ramen]}
+    stir-fry: {}
+    traybake: {synonyms: [sheet-pan, one-tray, tray-bake]}
+    roast: {}
+    flatbread: {synonyms: [pizza, naan-pizza, flammkuchen]}
+    burger: {}
+    sandwich: {synonyms: [toastie, sub]}
+    wrap: {synonyms: [burrito, shawarma-wrap]}
+    tacos: {synonyms: [taco, quesadilla, fajitas, nachos]}
+    platter: {synonyms: [mezze, mezze-platter, sharing-board, grazing]}
+    pie: {synonyms: [tart, quiche, pot-pie]}
+    fritters: {synonyms: [nuggets, croquettes, patties, falafels]}
+    skewers: {synonyms: [kebab, kebabs, sosaties]}
+    grain-dish: {synonyms: [pilaf, biryani, fried-rice, paella]}
+    steak: {}
+    dessert: {}
+    side: {}
+    other: {}
+
+meal:
+  mode: closed
+  values:
+    breakfast: {synonyms: [brunch]}
+    lunch: {}
+    dinner: {synonyms: [supper, main]}
+    snack: {}
+    dessert: {}
+    side: {}
+
+method:
+  mode: closed
+  values:
+    roast: {synonyms: [oven-roast, roasting]}
+    bake: {synonyms: [baking, oven-bake]}
+    grill: {synonyms: [broil, grilling, char, chargrill]}
+    braai: {synonyms: [barbecue, bbq]}
+    pan-fry: {synonyms: [fry, frying, sear, pan-sear]}
+    shallow-fry: {}
+    deep-fry: {}
+    saute: {synonyms: [sauteed, sweat, soften]}
+    stir-fry: {}
+    air-fry: {synonyms: [air-fryer]}
+    boil: {synonyms: [boiling, blanch]}
+    simmer: {synonyms: [reduce]}
+    steam: {}
+    poach: {}
+    braise: {synonyms: [slow-cook]}
+    toast: {synonyms: [dry-toast, toasting]}
+    blend: {synonyms: [puree, blitz, pulse]}
+    pickle: {synonyms: [quick-pickle]}
+    marinate: {}
+    mash: {synonyms: [crush]}
+    microwave: {}
+    raw: {synonyms: [no-cook, assemble]}
+
+time:
+  mode: closed
+  values:
+    quick: {synonyms: [quick-and-easy, fast, 15-minute, 20-minute, express]}
+    weeknight: {}
+    under-30: {synonyms: [30-minute]}
+    under-45: {}
+    slow: {synonyms: [weekend, low-and-slow]}
+
+season:
+  mode: closed
+  values:
+    spring: {}
+    summer: {synonyms: [hot-weather]}
+    autumn: {synonyms: [fall]}
+    winter: {synonyms: [cold-weather, warming, cosy, comfort]}
+
+other:
+  mode: open
+  values:
+    one-pan: {synonyms: [one-pot, one-pot-wonder]}
+    make-ahead: {synonyms: [meal-prep]}
+    freezer-friendly: {}
+    leftovers-friendly: {}
+    date-night: {synonyms: [special-occasion]}
+
+allergen:
+  mode: closed
+  values:
+    gluten: {}
+    wheat: {}
+    egg: {synonyms: [eggs]}
+    dairy: {synonyms: [cows-milk, cow-s-milk, milk, lactose]}
+    soy: {synonyms: [soya, soybeans]}
+    sesame: {}
+    tree-nuts: {synonyms: [nuts, tree-nut]}
+    peanuts: {synonyms: [peanut, groundnuts]}
+    sulphites: {synonyms: [sulfites, sulphur-dioxide]}
+    allium: {synonyms: [onion, garlic]}
+    fish: {}
+    crustaceans: {synonyms: [shellfish, crustacean]}
+    molluscs: {synonyms: [mollusks]}
+    celery: {}
+    mustard: {}
+    lupin: {}
+
+equipment:
+  mode: open
+  values:
+    oven: {}
+    grill: {synonyms: [oven-grill, broiler]}
+    air-fryer: {}
+    microwave: {}
+    stovetop: {synonyms: [hob]}
+    pan: {synonyms: [frying-pan, large-pan, skillet]}
+    pot: {synonyms: [saucepan]}
+    wok: {}
+    roasting-tray: {synonyms: [baking-tray, tray, sheet-pan, roasting-pan]}
+    ovenproof-dish: {synonyms: [baking-dish, oven-dish, small-ovenproof-dish]}
+    blender: {synonyms: [food-processor, stick-blender]}
+    kettle: {}
+    grater: {}
+    sieve: {synonyms: [colander]}
+    paper-towel: {synonyms: [kitchen-paper, paper-towels]}
+    tongs: {}
+    whisk: {}
+    lid: {}

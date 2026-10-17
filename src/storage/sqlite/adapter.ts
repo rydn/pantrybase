@@ -3,43 +3,36 @@ import Database from "better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
 import { EMBED_DIMS } from "../../config.js";
 import type {
+  AnyCategory,
   CatalogEntry,
   DuplicateCandidate,
+  FacetCategory,
   FileStat,
   IngredientRow,
   Recipe,
-  RecipeIngredient,
   RecipeRecord,
   RecipeSummary,
-  RecipeTags,
   SearchFilters,
   SearchHit,
   SourceKind,
   Stats,
-  TagCategory,
   TagCount,
 } from "../../types.js";
-import { TAG_CATEGORIES } from "../../types.js";
 import type { ChunkPending, RecipeFileEntry, StorageAdapter } from "../types.js";
-import { SCHEMA_VERSION, schemaSql } from "./schema.js";
+import { ALL_TABLES, SCHEMA_VERSION, schemaSql } from "./schema.js";
 
 interface RecipeRow {
   id: number;
   slug: string;
   title: string;
-  summary: string | null;
+  subtitle: string | null;
   servings: number | null;
-  prep_min: number | null;
-  cook_min: number | null;
+  active_min: number | null;
   total_min: number | null;
-  difficulty: string | null;
   source_kind: SourceKind;
-  source_ref: string | null;
-  source_ingested: string | null;
-  derived_from: string;
-  images: string;
-  tags: string;
-  notes: string | null;
+  provider_id: string | null;
+  needs_review: number;
+  doc: string;
   file_path: string;
   file_mtime: number;
   file_size: number;
@@ -64,19 +57,52 @@ const toRow = (r: IngredientDbRow): IngredientRow => ({
   category: r.category,
 });
 
-/** Text chunks that get indexed for a recipe: title+summary, ingredients, steps. */
+/**
+ * Text chunks indexed per recipe. Each is embedded separately so a query can match the
+ * dish identity, the description, the ingredient list or the method.
+ */
 export function recipeChunks(recipe: Recipe): Array<{ kind: string; text: string }> {
-  const tagNames = Object.values(recipe.tags).flat().join(", ");
-  const title = [recipe.title, recipe.summary ?? "", tagNames ? `Tags: ${tagNames}` : ""]
+  const tagNames = [...new Set(Object.values(recipe.tags).flat())].join(", ");
+  const title = [
+    recipe.title,
+    recipe.subtitle ?? "",
+    tagNames ? `Tags: ${tagNames}` : "",
+    recipe.provider?.plan ? `Plan: ${recipe.provider.plan}` : "",
+  ]
     .filter(Boolean)
     .join(". ");
-  const ingredients = `Ingredients: ${recipe.ingredients.map((i) => i.raw).join("; ")}`;
-  const steps = recipe.steps.join(" ");
+  const blurb = [recipe.blurb ?? "", recipe.description ?? ""].filter(Boolean).join(" ");
+  const ingredients = `Ingredients: ${recipe.ingredients
+    .map((i) =>
+      i.components?.length ? `${i.raw} (${i.components.map((c) => c.raw).join(", ")})` : i.raw,
+    )
+    .join("; ")}`;
+  const steps = [
+    ...recipe.steps.map((s) => (s.title ? `${s.title}: ${s.text}` : s.text)),
+    ...recipe.tips.map((t) => `Tip: ${t}`),
+  ].join(" ");
   return [
     { kind: "title", text: title },
+    { kind: "blurb", text: blurb },
     { kind: "ingredients", text: ingredients },
     { kind: "steps", text: steps },
   ].filter((c) => c.text.trim().length > 0);
+}
+
+/** Facets derived from structured fields: graph node types and filterable categories. */
+export function recipeFacets(recipe: Recipe): Array<[FacetCategory, string]> {
+  const out: Array<[FacetCategory, string]> = [];
+  const add = (cat: FacetCategory, v: string | null | undefined) => {
+    const t = v?.trim();
+    if (t && !out.some(([c, n]) => c === cat && n === t)) out.push([cat, t]);
+  };
+  for (const a of recipe.allergens) add("allergen", a);
+  for (const e of recipe.equipment) add("equipment", e);
+  for (const s of recipe.steps) for (const t of s.techniques ?? []) add("technique", t);
+  add("chef", recipe.provider?.chef);
+  add("provider", recipe.provider?.id);
+  add("plan", recipe.provider?.plan);
+  return out;
 }
 
 // Filler words that would otherwise make the OR fallback match every recipe.
@@ -118,10 +144,14 @@ function dice(a: string, b: string): number {
   return total === 0 ? 0 : (2 * overlap) / total;
 }
 
+const placeholders = (n: number) => Array.from({ length: n }, () => "?").join(",");
+
 export class SqliteAdapter implements StorageAdapter {
   private readonly db: Database.Database;
   private readonly cache = new Map<string, Database.Statement>();
   readonly dims: number;
+  /** True when an older schema was found and dropped; the caller should rebuild from files. */
+  readonly wasReset: boolean;
 
   constructor(file: string, dims: number = EMBED_DIMS) {
     this.dims = dims;
@@ -129,9 +159,33 @@ export class SqliteAdapter implements StorageAdapter {
     this.db.pragma("journal_mode = WAL");
     this.db.pragma("foreign_keys = ON");
     sqliteVec.load(this.db);
+    this.wasReset = this.resetIfStale();
     this.db.exec(schemaSql(dims));
     this.setMeta("schema_version", String(SCHEMA_VERSION));
     this.setMeta("dims", String(dims));
+  }
+
+  private resetIfStale(): boolean {
+    const hasMeta = this.db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'meta'")
+      .get();
+    if (!hasMeta) return false;
+    const row = this.db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get() as
+      | { value: string }
+      | undefined;
+    const dims = this.db.prepare("SELECT value FROM meta WHERE key = 'dims'").get() as
+      | { value: string }
+      | undefined;
+    if (row?.value === String(SCHEMA_VERSION) && (!dims || dims.value === String(this.dims))) {
+      return false;
+    }
+    this.db.pragma("foreign_keys = OFF");
+    this.db.transaction(() => {
+      for (const t of ALL_TABLES) this.db.exec(`DROP TABLE IF EXISTS ${t}`);
+      this.db.exec("DELETE FROM meta");
+    })();
+    this.db.pragma("foreign_keys = ON");
+    return true;
   }
 
   private s(sql: string): Database.Statement {
@@ -174,19 +228,16 @@ export class SqliteAdapter implements StorageAdapter {
         | undefined;
       const cols = {
         title: recipe.title,
-        summary: recipe.summary ?? null,
+        subtitle: recipe.subtitle ?? null,
         servings: recipe.servings ?? null,
-        prep_min: recipe.time.prep ?? null,
-        cook_min: recipe.time.cook ?? null,
+        active_min: recipe.time.active ?? null,
         total_min: recipe.time.total ?? null,
-        difficulty: recipe.difficulty ?? null,
         source_kind: recipe.source.kind,
-        source_ref: recipe.source.ref ?? null,
-        source_ingested: recipe.source.ingested ?? null,
-        derived_from: JSON.stringify(recipe.derived_from),
-        images: JSON.stringify(recipe.images),
-        tags: JSON.stringify(recipe.tags),
-        notes: recipe.notes ?? null,
+        provider_id: recipe.provider?.id ?? null,
+        needs_review: recipe.extraction?.needs_review ? 1 : 0,
+        energy_kcal: recipe.nutrition?.energy_kcal ?? null,
+        nutrition_basis: recipe.nutrition?.basis ?? null,
+        doc: JSON.stringify(recipe),
         file_path: file.file_path,
         file_mtime: Math.round(file.file_mtime),
         file_size: file.file_size,
@@ -207,7 +258,13 @@ export class SqliteAdapter implements StorageAdapter {
           .map((k) => `${k} = @${k}`)
           .join(", ");
         this.s(`UPDATE recipes SET ${sets} WHERE id = @id`).run({ ...cols, id });
-        for (const t of ["recipe_ingredients", "steps", "recipe_tags", "chunks"]) {
+        for (const t of [
+          "recipe_ingredients",
+          "step_ingredients",
+          "steps",
+          "recipe_tags",
+          "chunks",
+        ]) {
           this.s(`DELETE FROM ${t} WHERE recipe_id = ?`).run(id);
         }
       } else {
@@ -221,13 +278,18 @@ export class SqliteAdapter implements StorageAdapter {
       }
 
       const insIng = this.s(
-        "INSERT INTO recipe_ingredients(recipe_id, position, ingredient_id, raw, qty, unit, prep, optional) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        `INSERT INTO recipe_ingredients(recipe_id, position, ingredient_id, raw, qty, unit, prep,
+           optional, staple, source, brand, grp, extra) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       );
       recipe.ingredients.forEach((ing, i) => {
         const ingId = ingredientIds.get(ing.canonical);
         if (ingId === undefined) {
           throw new Error(`no ingredient id resolved for "${ing.canonical}"`);
         }
+        const extra =
+          ing.alternatives?.length || ing.components?.length
+            ? JSON.stringify({ alternatives: ing.alternatives, components: ing.components })
+            : null;
         insIng.run(
           id,
           i,
@@ -237,24 +299,53 @@ export class SqliteAdapter implements StorageAdapter {
           ing.unit ?? null,
           ing.prep ?? null,
           ing.optional ? 1 : 0,
+          ing.staple ? 1 : 0,
+          ing.source ?? null,
+          ing.brand ?? null,
+          ing.group ?? null,
+          extra,
         );
       });
 
-      const insStep = this.s("INSERT INTO steps(recipe_id, position, text) VALUES (?, ?, ?)");
-      recipe.steps.forEach((t, i) => {
-        insStep.run(id, i, t);
+      const insStep = this.s(
+        `INSERT INTO steps(recipe_id, position, title, text, techniques, equipment, uses, temp_c, minutes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      );
+      const insUse = this.s(
+        "INSERT OR IGNORE INTO step_ingredients(recipe_id, position, ingredient_id) VALUES (?, ?, ?)",
+      );
+      recipe.steps.forEach((step, i) => {
+        insStep.run(
+          id,
+          i,
+          step.title ?? null,
+          step.text,
+          JSON.stringify(step.techniques ?? []),
+          JSON.stringify(step.equipment ?? []),
+          JSON.stringify(step.uses ?? []),
+          step.temp_c ?? null,
+          step.minutes ? JSON.stringify(step.minutes) : null,
+        );
+        for (const use of step.uses ?? []) {
+          const ingId = ingredientIds.get(use);
+          if (ingId !== undefined) insUse.run(id, i, ingId);
+        }
       });
 
       const insTag = this.s("INSERT OR IGNORE INTO tags(category, name) VALUES (?, ?)");
       const getTag = this.s("SELECT id FROM tags WHERE category = ? AND name = ?");
-      const insRT = this.s("INSERT OR IGNORE INTO recipe_tags(recipe_id, tag_id) VALUES (?, ?)");
+      const insRT = this.s(
+        "INSERT OR IGNORE INTO recipe_tags(recipe_id, tag_id, origin) VALUES (?, ?, ?)",
+      );
+      const link = (category: string, name: string, origin: "tag" | "derived") => {
+        insTag.run(category, name);
+        const t = getTag.get(category, name) as { id: number };
+        insRT.run(id, t.id, origin);
+      };
       for (const [category, names] of Object.entries(recipe.tags)) {
-        for (const name of names ?? []) {
-          insTag.run(category, name);
-          const t = getTag.get(category, name) as { id: number };
-          insRT.run(id, t.id);
-        }
+        for (const name of names ?? []) link(category, name, "tag");
       }
+      for (const [category, name] of recipeFacets(recipe)) link(category, name, "derived");
 
       const insChunk = this.s(
         "INSERT INTO chunks(recipe_id, kind, text, hash, embed_pending) VALUES (?, ?, ?, ?, ?)",
@@ -272,42 +363,10 @@ export class SqliteAdapter implements StorageAdapter {
   }
 
   private rowToRecord(row: RecipeRow): RecipeRecord {
-    const ingredients = this.s(
-      `SELECT ri.raw, ri.qty, ri.unit, ri.prep, ri.optional, i.canonical, i.is_staple
-       FROM recipe_ingredients ri JOIN ingredients i ON i.id = ri.ingredient_id
-       WHERE ri.recipe_id = ? ORDER BY ri.position`,
-    ).all(row.id) as Array<{
-      raw: string;
-      qty: number | null;
-      unit: string | null;
-      prep: string | null;
-      optional: number;
-      canonical: string;
-      is_staple: number;
-    }>;
-    const steps = this.s("SELECT text FROM steps WHERE recipe_id = ? ORDER BY position").all(
-      row.id,
-    ) as Array<{ text: string }>;
-    const ings: RecipeIngredient[] = ingredients.map((r) => {
-      const ing: RecipeIngredient = { raw: r.raw, canonical: r.canonical };
-      if (r.qty !== null) ing.qty = r.qty;
-      if (r.unit !== null) ing.unit = r.unit;
-      if (r.prep !== null) ing.prep = r.prep;
-      if (r.optional === 1) ing.optional = true;
-      if (r.is_staple === 1) ing.staple = true;
-      return ing;
-    });
-    const rec: RecipeRecord = {
+    const doc = JSON.parse(row.doc) as Recipe;
+    return {
+      ...doc,
       id: row.id,
-      slug: row.slug,
-      title: row.title,
-      time: { prep: row.prep_min, cook: row.cook_min, total: row.total_min },
-      source: { kind: row.source_kind },
-      derived_from: JSON.parse(row.derived_from) as string[],
-      images: JSON.parse(row.images) as string[],
-      tags: JSON.parse(row.tags) as RecipeTags,
-      ingredients: ings,
-      steps: steps.map((s) => s.text),
       file_path: row.file_path,
       file_mtime: row.file_mtime,
       file_size: row.file_size,
@@ -315,13 +374,6 @@ export class SqliteAdapter implements StorageAdapter {
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
-    if (row.summary !== null) rec.summary = row.summary;
-    if (row.servings !== null) rec.servings = row.servings;
-    if (row.difficulty !== null) rec.difficulty = row.difficulty as RecipeRecord["difficulty"];
-    if (row.source_ref !== null) rec.source.ref = row.source_ref;
-    if (row.source_ingested !== null) rec.source.ingested = row.source_ingested;
-    if (row.notes !== null) rec.notes = row.notes;
-    return rec;
   }
 
   getRecipe(slug: string): RecipeRecord | undefined {
@@ -330,17 +382,23 @@ export class SqliteAdapter implements StorageAdapter {
   }
 
   private rowToSummary(row: RecipeRow): RecipeSummary {
+    const doc = JSON.parse(row.doc) as Recipe;
     const s: RecipeSummary = {
       id: row.id,
       slug: row.slug,
       title: row.title,
       total_min: row.total_min,
+      active_min: row.active_min,
       servings: row.servings,
       source_kind: row.source_kind,
-      tags: JSON.parse(row.tags) as RecipeTags,
-      images: JSON.parse(row.images) as string[],
+      provider_id: row.provider_id,
+      needs_review: row.needs_review === 1,
+      tags: doc.tags,
+      allergens: doc.allergens ?? [],
+      images: doc.images,
     };
-    if (row.summary !== null) s.summary = row.summary;
+    if (doc.subtitle) s.subtitle = doc.subtitle;
+    if (doc.blurb) s.blurb = doc.blurb;
     return s;
   }
 
@@ -352,23 +410,44 @@ export class SqliteAdapter implements StorageAdapter {
       where.push("total_min IS NOT NULL AND total_min <= ?");
       params.push(filters.max_total_min);
     }
+    if (filters.max_active_min !== undefined) {
+      where.push(
+        "COALESCE(active_min, total_min) IS NOT NULL AND COALESCE(active_min, total_min) <= ?",
+      );
+      params.push(filters.max_active_min);
+    }
     if (filters.source_kind) {
       where.push("source_kind = ?");
       params.push(filters.source_kind);
+    }
+    if (filters.provider) {
+      where.push("provider_id = ?");
+      params.push(filters.provider.toLowerCase());
+    }
+    if (filters.needs_review !== undefined) {
+      where.push("needs_review = ?");
+      params.push(filters.needs_review ? 1 : 0);
     }
     for (const [category, names] of Object.entries(filters.tags ?? {})) {
       if (!names || names.length === 0) continue;
       where.push(
         `id IN (SELECT rt.recipe_id FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id
-                WHERE t.category = ? AND t.name IN (${names.map(() => "?").join(",")}))`,
+                WHERE t.category = ? AND lower(t.name) IN (${placeholders(names.length)}))`,
       );
       params.push(category, ...names.map((n) => n.toLowerCase().trim()));
     }
-    if (filters.exclude_ingredients && filters.exclude_ingredients.length > 0) {
+    if (filters.exclude_allergens?.length) {
+      where.push(
+        `id NOT IN (SELECT rt.recipe_id FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id
+                    WHERE t.category = 'allergen' AND t.name IN (${placeholders(filters.exclude_allergens.length)}))`,
+      );
+      params.push(...filters.exclude_allergens);
+    }
+    if (filters.exclude_ingredients?.length) {
       where.push(
         `id NOT IN (SELECT ri.recipe_id FROM recipe_ingredients ri
                     JOIN ingredient_aliases a ON a.ingredient_id = ri.ingredient_id
-                    WHERE a.alias IN (${filters.exclude_ingredients.map(() => "?").join(",")}))`,
+                    WHERE a.alias IN (${placeholders(filters.exclude_ingredients.length)}))`,
       );
       params.push(...filters.exclude_ingredients.map((n) => n.toLowerCase().trim()));
     }
@@ -378,14 +457,14 @@ export class SqliteAdapter implements StorageAdapter {
   listRecipes(opts: { filters?: SearchFilters; limit?: number; offset?: number }): RecipeSummary[] {
     const { where, params } = this.filterSql(opts.filters);
     const rows = this.s(
-      `SELECT * FROM recipes ${where} ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+      `SELECT * FROM recipes ${where} ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?`,
     ).all(...params, opts.limit ?? 50, opts.offset ?? 0) as RecipeRow[];
     return rows.map((r) => this.rowToSummary(r));
   }
 
   summariesByIds(ids: number[]): RecipeSummary[] {
     if (ids.length === 0) return [];
-    const rows = this.s(`SELECT * FROM recipes WHERE id IN (${ids.map(() => "?").join(",")})`).all(
+    const rows = this.s(`SELECT * FROM recipes WHERE id IN (${placeholders(ids.length)})`).all(
       ...ids,
     ) as RecipeRow[];
     const byId = new Map(rows.map((r) => [r.id, this.rowToSummary(r)]));
@@ -438,10 +517,9 @@ export class SqliteAdapter implements StorageAdapter {
                    JOIN ingredients i2 ON i2.id = r2.ingredient_id
                    WHERE r2.recipe_id = ri.recipe_id AND i2.is_staple = 0) AS total
          FROM recipe_ingredients ri JOIN ingredients i ON i.id = ri.ingredient_id
-         WHERE i.is_staple = 0 AND i.canonical IN (${names.map(() => "?").join(",")})
+         WHERE i.is_staple = 0 AND i.canonical IN (${placeholders(names.length)})
          GROUP BY ri.recipe_id`,
       ).all(...names) as Array<{ recipe_id: number; overlap: number; total: number }>;
-      const mine = new Set(names);
       const staples = new Set(
         (
           this.s("SELECT canonical FROM ingredients WHERE is_staple = 1").all() as Array<{
@@ -449,7 +527,7 @@ export class SqliteAdapter implements StorageAdapter {
           }>
         ).map((r) => r.canonical),
       );
-      const mineNonStaple = [...mine].filter((n) => !staples.has(n)).length;
+      const mineNonStaple = names.filter((n) => !staples.has(n)).length;
       for (const o of overlaps) {
         const union = mineNonStaple + o.total - o.overlap;
         const jaccard = union === 0 ? 0 : o.overlap / union;
@@ -552,14 +630,13 @@ export class SqliteAdapter implements StorageAdapter {
 
   // ------------------------------------------------------------------- tags
 
-  listTags(category?: TagCategory): TagCount[] {
-    const rows = this.s(
+  listTags(category?: AnyCategory): TagCount[] {
+    return this.s(
       `SELECT t.category, t.name, COUNT(rt.recipe_id) AS count
-       FROM tags t LEFT JOIN recipe_tags rt ON rt.tag_id = t.id
+       FROM tags t JOIN recipe_tags rt ON rt.tag_id = t.id
        ${category ? "WHERE t.category = ?" : ""}
        GROUP BY t.id ORDER BY t.category, count DESC, t.name`,
     ).all(...(category ? [category] : [])) as TagCount[];
-    return rows.filter((r) => (TAG_CATEGORIES as readonly string[]).includes(r.category));
   }
 
   // ----------------------------------------------------------------- search
@@ -664,6 +741,7 @@ export class SqliteAdapter implements StorageAdapter {
       chunks: one("SELECT COUNT(*) n FROM chunks"),
       chunks_pending: one("SELECT COUNT(*) n FROM chunks WHERE embed_pending = 1"),
       vectors: one("SELECT COUNT(*) n FROM chunk_vec"),
+      needs_review: one("SELECT COUNT(*) n FROM recipes WHERE needs_review = 1"),
     };
   }
 }

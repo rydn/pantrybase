@@ -35,8 +35,8 @@ describe("save + search", () => {
 
     const stats = t.ctx.store.stats();
     expect(stats.recipes).toBe(1);
-    expect(stats.chunks).toBe(3);
-    expect(stats.chunks_pending).toBe(3);
+    expect(stats.chunks).toBe(4);
+    expect(stats.chunks_pending).toBe(4);
   });
 
   it("finds recipes lexically and honours filters", async () => {

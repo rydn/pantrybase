@@ -21,7 +21,7 @@ describe("vector storage", () => {
     saveRecipe(t.ctx, harissaChicken);
     saveRecipe(t.ctx, mushroomRisotto);
     const pending = t.ctx.store.pendingChunks(100);
-    expect(pending.length).toBe(6);
+    expect(pending.length).toBe(8);
 
     const chicken = t.ctx.store.getRecipe("harissa-chicken-traybake");
     const rows = pending.map((p, i) => ({
@@ -31,7 +31,7 @@ describe("vector storage", () => {
     t.ctx.store.storeEmbeddings(rows);
 
     const stats = t.ctx.store.stats();
-    expect(stats.vectors).toBe(6);
+    expect(stats.vectors).toBe(8);
     expect(stats.chunks_pending).toBe(0);
 
     const hits = t.ctx.store.searchVector(vec(t.ctx.store.dims, 0), 5);
@@ -46,10 +46,10 @@ describe("vector storage", () => {
         .pendingChunks(100)
         .map((p) => ({ id: p.id, embedding: vec(t.ctx.store.dims, 0) })),
     );
-    // Change only the method: title and ingredient chunks keep their vectors.
+    // Change only the method: title, blurb and ingredient chunks keep their vectors.
     saveRecipe(t.ctx, { ...harissaChicken, slug: first.slug, steps: ["Just roast it."] });
     const stats = t.ctx.store.stats();
-    expect(stats.vectors).toBe(2);
+    expect(stats.vectors).toBe(3);
     expect(stats.chunks_pending).toBe(1);
   });
 });

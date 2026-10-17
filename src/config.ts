@@ -30,6 +30,9 @@ export interface DataPaths {
   images: string;
   db: string;
   ingredientsYaml: string;
+  vocabularyYaml: string;
+  /** Project-local provider profiles that add to or override the built-in ones. */
+  providers: string;
 }
 
 export function dataPaths(projectRoot: string): DataPaths {
@@ -44,6 +47,8 @@ export function dataPaths(projectRoot: string): DataPaths {
     images: path.join(data, "images"),
     db: path.join(data, "pantrybase.db"),
     ingredientsYaml: path.join(data, "ingredients.yaml"),
+    vocabularyYaml: path.join(data, "vocabulary.yaml"),
+    providers: path.join(data, "providers"),
   };
 }
 

@@ -22,10 +22,41 @@ export interface SearchResponse {
   mode: SearchMode;
 }
 
+/**
+ * Normalise filter values through the vocabulary and expand hierarchies, so `cuisine: asian`
+ * also matches thai and korean, and "Cow's Milk" matches the `dairy` allergen.
+ */
+export function expandFilters(ctx: AppContext, filters?: SearchFilters): SearchFilters | undefined {
+  if (!filters) return filters;
+  const out: SearchFilters = { ...filters };
+  if (filters.tags) {
+    const tags: NonNullable<SearchFilters["tags"]> = {};
+    for (const [cat, values] of Object.entries(filters.tags)) {
+      if (!values?.length) continue;
+      const free = cat === "chef" || cat === "plan";
+      tags[cat as keyof typeof tags] = free
+        ? values
+        : [
+            ...new Set(
+              values.flatMap((v) => ctx.vocab.expand(cat === "technique" ? "method" : cat, v)),
+            ),
+          ];
+    }
+    out.tags = tags;
+  }
+  if (filters.exclude_allergens?.length) {
+    out.exclude_allergens = [
+      ...new Set(filters.exclude_allergens.flatMap((a) => ctx.vocab.expand("allergen", a))),
+    ];
+  }
+  return out;
+}
+
 export async function searchRecipes(ctx: AppContext, opts: SearchOptions): Promise<SearchResponse> {
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 100);
   const mode = opts.mode ?? "hybrid";
   const query = opts.query?.trim() ?? "";
+  opts = { ...opts, filters: expandFilters(ctx, opts.filters) };
 
   if (!query) {
     const rows = ctx.store.listRecipes({ filters: opts.filters, limit });

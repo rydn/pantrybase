@@ -1,4 +1,5 @@
 import type {
+  AnyCategory,
   CatalogEntry,
   DuplicateCandidate,
   FileStat,
@@ -9,7 +10,6 @@ import type {
   SearchFilters,
   SearchHit,
   Stats,
-  TagCategory,
   TagCount,
 } from "../types.js";
 
@@ -28,6 +28,8 @@ export interface RecipeFileEntry extends FileStat {
  */
 export interface StorageAdapter {
   readonly dims: number;
+  /** True when the store discarded an incompatible older index; rebuild from the files. */
+  readonly wasReset: boolean;
   close(): void;
   transaction<T>(fn: () => T): T;
 
@@ -57,8 +59,8 @@ export interface StorageAdapter {
     limit?: number;
   }): Array<IngredientRow & { recipe_count: number }>;
 
-  // tags
-  listTags(category?: TagCategory): TagCount[];
+  // tags (assigned) and facets (derived)
+  listTags(category?: AnyCategory): TagCount[];
 
   // search
   searchLexical(query: string, limit: number): SearchHit[];

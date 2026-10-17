@@ -4,7 +4,7 @@ kind: onboarding
 tags: [onboarding, planned]
 related: [file:src/server.ts, file:src/tools/index.ts, file:src/storage/types.ts, file:src/storage/sqlite/adapter.ts, file:src/recipes, file:src/ingest, file:src/search, file:web, file:.claude-plugin/plugin.json, file:package.json]
 created: 2026-10-17T15:49:06.943Z
-updated: 2026-10-17T15:49:06.943Z
+updated: 2026-10-17T16:39:50.687Z
 ---
 
 # pantrybase — structure (planned layout, nothing built yet as of 2026-10-17)
@@ -32,4 +32,11 @@ Two kinds of locations: the **package** (this repo) and the **per-project data d
 - `pantrybase.db` — SQLite index, fully rebuildable from the markdown.
 - Global: `~/.pantrybase/models/` (embedding model cache), `~/.pantrybase/plugin/` (installed copy).
 
-Hotspots/entry points to update here once code exists: `em_architecture` will know them.
+## Added in v2 (2026-10-17)
+- `src/vocabulary/vocabulary.ts` + `seed/vocabulary.yaml` (copied to `pantrybase/vocabulary.yaml`): tag categories with closed/open mode, synonyms, cuisine hierarchy (`expand`, `ancestors`).
+- `providers/<id>/{profile.yaml,guide.md}` (built-in `ucook`, `generic`; project overrides in `pantrybase/providers/`), loaded by `src/providers/registry.ts`; served to Claude by `pb_providers`.
+- `src/recipes/enrich.ts` (provider rules → vocabulary) and `src/recipes/pipeline.ts` (`prepareRecipe`: enrich → resolve ingredients → rewrite step `uses`), shared by save and reconcile.
+- Storage v2: full record in `recipes.doc` JSON; `step_ingredients` graph edges; derived facets (allergen, equipment, technique, chef, provider, plan) in `tags`/`recipe_tags` with `origin='derived'`; schema-version mismatch drops and rebuilds from markdown.
+- Test fixtures from real UCOOK cards: `test/fixtures/ucook.ts`.
+
+Hotspots/entry points: `em_architecture` knows them.

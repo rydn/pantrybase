@@ -1,4 +1,31 @@
-export const SCHEMA_VERSION = 1;
+import { ALL_CATEGORIES } from "../../types.js";
+
+/**
+ * Bump on any incompatible change. The DB is only an index over the markdown files, so a
+ * version mismatch drops everything and the caller rebuilds from `recipes/*.md`.
+ */
+export const SCHEMA_VERSION = 2;
+
+/** Tables dropped on a version change (virtual tables and triggers go with them). */
+export const ALL_TABLES = [
+  "chunk_vec",
+  "chunks_fts",
+  "chunks_tri",
+  "chunks",
+  "step_ingredients",
+  "steps",
+  "recipe_tags",
+  "tags",
+  "recipe_ingredients",
+  "pantry_items",
+  "alias_tri",
+  "ingredient_aliases",
+  "ingredients",
+  "ingest_items",
+  "recipes",
+];
+
+const categoryList = ALL_CATEGORIES.map((c) => `'${c}'`).join(",");
 
 /** Idempotent DDL: every statement is IF NOT EXISTS so it can run on every open. */
 export function schemaSql(dims: number): string {
@@ -8,23 +35,22 @@ CREATE TABLE IF NOT EXISTS meta (
   value TEXT NOT NULL
 );
 
+-- One row per recipe file. 'doc' holds the full record (minus ingredients/steps, which have
+-- their own tables); the other columns exist for filtering and sorting.
 CREATE TABLE IF NOT EXISTS recipes (
   id INTEGER PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
-  summary TEXT,
+  subtitle TEXT,
   servings INTEGER,
-  prep_min INTEGER,
-  cook_min INTEGER,
+  active_min INTEGER,
   total_min INTEGER,
-  difficulty TEXT,
   source_kind TEXT NOT NULL CHECK (source_kind IN ('card','url','synthesized','manual')),
-  source_ref TEXT,
-  source_ingested TEXT,
-  derived_from TEXT NOT NULL DEFAULT '[]',
-  images TEXT NOT NULL DEFAULT '[]',
-  tags TEXT NOT NULL DEFAULT '{}',
-  notes TEXT,
+  provider_id TEXT,
+  needs_review INTEGER NOT NULL DEFAULT 0,
+  energy_kcal REAL,
+  nutrition_basis TEXT,
+  doc TEXT NOT NULL,
   file_path TEXT NOT NULL UNIQUE,
   file_mtime INTEGER NOT NULL,
   file_size INTEGER NOT NULL,
@@ -33,6 +59,7 @@ CREATE TABLE IF NOT EXISTS recipes (
   updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS recipes_total_min ON recipes(total_min);
+CREATE INDEX IF NOT EXISTS recipes_provider ON recipes(provider_id);
 
 CREATE TABLE IF NOT EXISTS ingredients (
   id INTEGER PRIMARY KEY,
@@ -71,6 +98,11 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
   unit TEXT,
   prep TEXT,
   optional INTEGER NOT NULL DEFAULT 0,
+  staple INTEGER NOT NULL DEFAULT 0,
+  source TEXT,
+  brand TEXT,
+  grp TEXT,
+  extra TEXT,
   PRIMARY KEY (recipe_id, position)
 );
 CREATE INDEX IF NOT EXISTS recipe_ingredients_ingredient ON recipe_ingredients(ingredient_id);
@@ -78,14 +110,30 @@ CREATE INDEX IF NOT EXISTS recipe_ingredients_ingredient ON recipe_ingredients(i
 CREATE TABLE IF NOT EXISTS steps (
   recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
   position INTEGER NOT NULL,
+  title TEXT,
   text TEXT NOT NULL,
+  techniques TEXT NOT NULL DEFAULT '[]',
+  equipment TEXT NOT NULL DEFAULT '[]',
+  uses TEXT NOT NULL DEFAULT '[]',
+  temp_c REAL,
+  minutes TEXT,
   PRIMARY KEY (recipe_id, position)
 );
 
+-- Graph edges: which catalog ingredient each step uses.
+CREATE TABLE IF NOT EXISTS step_ingredients (
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
+  PRIMARY KEY (recipe_id, position, ingredient_id)
+);
+CREATE INDEX IF NOT EXISTS step_ingredients_ingredient ON step_ingredients(ingredient_id);
+
+-- Tags Claude assigns and facets derived from structured fields share one table, so every
+-- category is both a filter and a graph node type.
 CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY,
-  category TEXT NOT NULL CHECK (category IN
-    ('protein','diet','starch','flavor','cuisine','meal','method','time','season','other')),
+  category TEXT NOT NULL CHECK (category IN (${categoryList})),
   name TEXT NOT NULL,
   UNIQUE (category, name)
 );
@@ -93,6 +141,7 @@ CREATE TABLE IF NOT EXISTS tags (
 CREATE TABLE IF NOT EXISTS recipe_tags (
   recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
   tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  origin TEXT NOT NULL DEFAULT 'tag' CHECK (origin IN ('tag','derived')),
   PRIMARY KEY (recipe_id, tag_id)
 );
 CREATE INDEX IF NOT EXISTS recipe_tags_tag ON recipe_tags(tag_id);

@@ -20,7 +20,7 @@ export function tempContext(): { ctx: AppContext; dispose(): void; root: string 
 
 export const harissaChicken: RecipeInput = {
   title: "Harissa Chicken Traybake",
-  summary: "One-pan roast chicken thighs with chickpeas and peppers.",
+  blurb: "One-pan roast chicken thighs with chickpeas and peppers.",
   servings: 2,
   time: { prep: 10, cook: 35 },
   difficulty: "easy",
@@ -51,7 +51,7 @@ export const harissaChicken: RecipeInput = {
 
 export const mushroomRisotto: RecipeInput = {
   title: "Creamy Mushroom Risotto",
-  summary: "Slow-stirred risotto with chestnut mushrooms and parmesan.",
+  blurb: "Slow-stirred risotto with chestnut mushrooms and parmesan.",
   servings: 2,
   time: { prep: 10, cook: 30 },
   source: { kind: "card" },

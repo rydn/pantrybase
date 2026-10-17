@@ -36,9 +36,32 @@ function dice(a: string, b: string): number {
   return total === 0 ? 0 : (2 * overlap) / total;
 }
 
+/** Singular forms of the last word: "naan breads" → ["naan bread"], "tomatoes" → ["tomato"]. */
+export function singularForms(name: string): string[] {
+  const m = /^(.*?)(\S+)$/.exec(name);
+  if (!m) return [];
+  const [, head = "", last = ""] = m;
+  const out: string[] = [];
+  if (last.endsWith("ies") && last.length > 4) out.push(`${last.slice(0, -3)}y`);
+  if (last.endsWith("oes") || last.endsWith("ches") || last.endsWith("shes"))
+    out.push(last.slice(0, -2));
+  if (last.endsWith("s") && !last.endsWith("ss") && last.length > 3) out.push(last.slice(0, -1));
+  return out.map((w) => `${head}${w}`);
+}
+
+function lookup(store: StorageAdapter, name: string) {
+  const exact = store.getIngredient(name);
+  if (exact) return exact;
+  for (const s of singularForms(name)) {
+    const row = store.getIngredient(s);
+    if (row) return row;
+  }
+  return undefined;
+}
+
 /**
- * Map every ingredient to a catalog row: exact canonical → alias → fuzzy (≥0.85 Dice on
- * trigram candidates) → create. Rewrites `canonical` on the returned ingredients.
+ * Map every ingredient to a catalog row: exact canonical → alias → singular → fuzzy (≥0.85
+ * Dice on trigram candidates) → create. Rewrites `canonical` on the returned ingredients.
  */
 export function resolveIngredients(
   store: StorageAdapter,
@@ -47,7 +70,7 @@ export function resolveIngredients(
   const res: Resolution = { ids: new Map(), created: [], aliased: [], ingredients: [] };
   for (const ing of ingredients) {
     const name = normalizeName(ing.canonical);
-    let row = store.getIngredient(name);
+    let row = lookup(store, name);
     if (row) {
       if (row.canonical !== name) res.aliased.push({ from: name, to: row.canonical, via: "alias" });
     } else {
@@ -63,7 +86,8 @@ export function resolveIngredients(
     }
     res.ids.set(row.canonical, row.id);
     const out: RecipeIngredient = { ...ing, canonical: row.canonical };
-    if (row.is_staple) out.staple = true;
+    // Staple if the catalog says so, or this recipe expects it from your kitchen.
+    if (row.is_staple || ing.staple) out.staple = true;
     else delete out.staple;
     res.ingredients.push(out);
   }
@@ -84,6 +108,11 @@ export function readCatalogYaml(file: string): CatalogEntry[] {
     staple: v?.staple ?? false,
     category: v?.category ?? null,
   }));
+}
+
+/** Resolve a free-text name to a catalog canonical without creating anything. */
+export function findCanonical(store: StorageAdapter, name: string): string | undefined {
+  return lookup(store, normalizeName(name))?.canonical;
 }
 
 /** Load the ingredient catalog (seed or project copy) into the store. */

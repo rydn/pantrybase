@@ -1,0 +1,60 @@
+id: ucook
+name: UCOOK
+country: ZA
+website: https://ucook.co.za
+# Text that identifies a UCOOK card in a photo.
+recognise: [UCOOK, "#lovingucook", "@ucooksa", "Join the UCOOK community"]
+sides:
+  front: [title, "subtitle starting with 'with'", Hands-on Time, Overall Time, Serves, Chef, wine pairing]
+  back: [Ingredients & Prep, From Your Kitchen, Nutritional Information, Allergens, Eat Within]
+# Photos are usually shot front then back; the back carries no title, so pair by order and content.
+pairing: front-then-back
+nutrition_basis: per_100g
+default_servings: 2
+# Heading of the card section listing what you supply yourself (ingredients get source: kitchen).
+kitchen_section: From Your Kitchen
+
+# Plan labels printed on the front → tags.
+plan_labels:
+  Veggie: {diet: [vegetarian]}
+  Vegetarian: {diet: [vegetarian]}
+  Vegan: {diet: [vegan]}
+  Quick & Easy: {time: [quick]}
+  Carb Conscious: {diet: [low-carb]}
+  Calorie Conscious: {diet: [low-calorie]}
+  Family: {diet: [family-friendly]}
+  Plant-based: {diet: [vegan]}
+
+# Card allergen wording → vocabulary values (both card generations).
+allergen_synonyms:
+  Cow's Milk: dairy
+  Dairy: dairy
+  Tree Nuts: tree-nuts
+  Sulphites: sulphites
+  Allium: allium
+  Soy: soy
+
+# Brand names stripped from canonical ingredient names (kept in `brand`).
+brands: [NOMU, Pesto Princess, Outcast, Old Stone Mill, Chevin, Fry's, Lancewood, Clover, Woolworths]
+
+# "From Your Kitchen" items that are equipment, not ingredients.
+equipment_terms:
+  Paper Towel: paper-towel
+  Blender: blender
+  Food Processor: blender
+  Microwave: microwave
+  Air Fryer: air-fryer
+  Kettle: kettle
+  Ovenproof Dish: ovenproof-dish
+
+# Regional ingredient names → canonical.
+ingredient_aliases:
+  courgette: [baby marrow, baby marrows]
+  aubergine: [brinjal, brinjals]
+  bell pepper: [piquanté pepper, piquante peppers]
+  flour: [cake flour]
+  cherry tomatoes: [baby tomatoes]
+  goat's cheese: [chevin, chevin goat's cheese]
+  milk: [low fat uht milk, uht milk, fresh milk]
+  chopped tomatoes: [cooked chopped tomato, cooked chopped tomatoes]
+  carrot: [julienne carrots, carrot wedges]

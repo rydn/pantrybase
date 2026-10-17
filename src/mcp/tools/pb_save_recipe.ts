@@ -7,9 +7,13 @@ export default defineTool({
   name: "pb_save_recipe",
   description:
     "Save a recipe (new or, with `slug`, an update). Writes pantrybase/recipes/<slug>.md as the source of truth and indexes it. " +
-    "Ingredients need `raw` (as written) and `canonical` (normalised singular name); mark staples. " +
-    "Tags are grouped by category: protein, diet, starch, flavor, cuisine, meal, method, time, season, other. " +
-    "Returns {saved, slug, new_ingredients} or {saved:false, duplicate_of:[…]} — pass allow_duplicate:true if it really is a different recipe.",
+    "For meal-box cards read pb_providers {id} first and follow its guide; set provider.id so its rules apply. " +
+    "Ingredients need `raw` (as printed) and `canonical` (generic singular name, no brand) plus source box|kitchen. " +
+    "Steps are objects {title, text, techniques, uses, equipment, temp_c, minutes} (plain strings are accepted). " +
+    "Tags by category (protein, diet, starch, flavor, texture, cuisine, dish, meal, method, time, season, other) are " +
+    "normalised against the vocabulary. Write a `blurb` in your own words for semantic search and record unreadable " +
+    "fields in extraction.uncertain. Returns {saved, slug, new_ingredients, vocabulary:{mapped,new_tags,rejected}, …} " +
+    "or {saved:false, duplicate_of:[…]} — pass allow_duplicate:true if it really is a different recipe.",
   schema: {
     ...recipeInputSchema.shape,
     allow_duplicate: z.boolean().optional(),
