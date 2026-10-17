@@ -10,7 +10,7 @@ import {
 } from "../config.js";
 import { Embedder } from "../embeddings/model.js";
 import { EmbedQueue } from "../embeddings/queue.js";
-import { reconcile } from "../files/reconcile.js";
+import { type ReconcileResult, reconcile } from "../files/reconcile.js";
 import { loadCatalog } from "../ingredients/normalize.js";
 import { builtinProvidersDir, ProviderRegistry } from "../providers/registry.js";
 import { SqliteAdapter } from "../storage/sqlite/adapter.js";
@@ -28,8 +28,17 @@ export interface AppContext {
   log: typeof log;
   /** Reload ingredients.yaml / vocabulary.yaml / provider profiles if they changed (or `force`). */
   refresh(force?: boolean): { catalog: boolean; vocabulary: boolean };
+  /**
+   * Bring the index up to date with the files before serving a request: reload changed config
+   * (and re-parse every recipe if it changed), then pick up hand-edited, added or deleted
+   * recipe files. Throttled unless `now` is set.
+   */
+  sync(opts?: { now?: boolean }): ReconcileResult | null;
   close(): void;
 }
+
+/** Minimum gap between automatic file scans. */
+const SYNC_INTERVAL_MS = 2000;
 
 export interface ContextOptions {
   /** Set false in tests to avoid loading the model. */
@@ -92,6 +101,7 @@ export function openContext(projectRoot?: string, opts: ContextOptions = {}): Ap
   const embedQueue = new EmbedQueue(store, embedder);
 
   let seen = { catalog: -1, vocabulary: -1 };
+  let lastSync = Date.now();
   const ctx: AppContext = {
     root,
     paths,
@@ -118,6 +128,18 @@ export function openContext(projectRoot?: string, opts: ContextOptions = {}): Ap
       if (changed.vocabulary || force) ctx.vocab = buildVocabulary(paths, ctx.providers);
       seen = now;
       return changed;
+    },
+    sync({ now = false } = {}) {
+      const t = Date.now();
+      if (!now && t - lastSync < SYNC_INTERVAL_MS) return null;
+      lastSync = t;
+      const changed = ctx.refresh();
+      const full = changed.catalog || changed.vocabulary;
+      const r = reconcile(ctx, { full });
+      if (full || r.added || r.updated || r.removed || r.errors.length) {
+        log("sync", { config_changed: full, ...r, unchanged: undefined });
+      }
+      return r;
     },
     close() {
       store.close();

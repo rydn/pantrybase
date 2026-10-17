@@ -8,7 +8,9 @@ const pkg = createRequire(import.meta.url)("../package.json") as { version: stri
 
 const USAGE = `pantrybase ${pkg.version}
 
-  pantrybase rebuild [--full]     re-index ./pantrybase/recipes/*.md
+  pantrybase rebuild [--full] [--reembed]
+                                  re-index ./pantrybase/recipes/*.md (--full re-parses every file,
+                                  --reembed recomputes embeddings)
   pantrybase embed                embed pending chunks now (downloads the model if needed)
   pantrybase search <query…>      quick search from the terminal
   pantrybase stats                counts and paths
@@ -19,7 +21,10 @@ async function main(argv: string[]): Promise<number> {
   switch (cmd) {
     case "rebuild": {
       const ctx = openContext(undefined, { reconcile: false });
-      const r = reconcile(ctx, { full: rest.includes("--full") });
+      const r = reconcile(ctx, {
+        full: rest.includes("--full"),
+        reembed: rest.includes("--reembed"),
+      });
       console.log(JSON.stringify(r, null, 2));
       await ctx.embedQueue.run();
       ctx.close();

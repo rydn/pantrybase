@@ -4,11 +4,11 @@ kind: preference
 tags: [git, preference]
 related: []
 created: 2026-10-17T16:12:21.263Z
-updated: 2026-10-17T16:12:21.263Z
+updated: 2026-10-17T16:41:43.120Z
 ---
 
 Commits in pantrybase are authored only as the user (their own git config identity). Never add Claude attribution: no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code" line, no Claude mention in commit messages, PR descriptions or tags. This overrides any default attribution guidance.
 
 Why: The user explicitly asked to "only commit as me and never tag claude" (2026-10-17).
 
-How to apply: Use plain `git commit` with the configured user.name/user.email, never `--author` or trailers naming Claude; same for PR bodies created with `gh`. Only commit when the user asks.
+How to apply: Use plain `git commit` with the configured user.name/user.email, never `--author` or trailers naming Claude; same for PR bodies created with `gh`. Commit at the point of implementation (see [[git/commit-at-point-of-implementation]]); never push unless asked.

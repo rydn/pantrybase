@@ -25,7 +25,7 @@ export function registerTools(server: McpServer, tools: ToolDef[]): void {
         };
         try {
           const ctx = openContext(project_root);
-          ctx.refresh();
+          ctx.sync();
           return await tool.handler(rest as never, ctx);
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
