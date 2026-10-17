@@ -7,6 +7,7 @@ import pb_inbox_resolve from "./pb_inbox_resolve.js";
 import pb_ingest_source from "./pb_ingest_source.js";
 import pb_list_tags from "./pb_list_tags.js";
 import pb_merge_ingredients from "./pb_merge_ingredients.js";
+import pb_open_ui from "./pb_open_ui.js";
 import { pb_pantry_add, pb_pantry_list, pb_pantry_remove } from "./pb_pantry.js";
 import pb_pantry_match from "./pb_pantry_match.js";
 import pb_providers from "./pb_providers.js";
@@ -36,6 +37,7 @@ export const tools: ToolDef[] = [
   pb_inbox_list,
   pb_save_recipe,
   // maintenance
+  pb_open_ui,
   pb_merge_ingredients,
   pb_stats,
   pb_rebuild,

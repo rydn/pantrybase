@@ -19,8 +19,9 @@ describe("project root resolution", () => {
     expect(resolveProjectRoot()).toBe(path.resolve(process.cwd()));
   });
 
-  it("ignores an unsubstituted ${CLAUDE_PROJECT_DIR} placeholder", () => {
-    process.env.PANTRYBASE_PROJECT_ROOT = "${CLAUDE_PROJECT_DIR}";
+  it("ignores an unsubstituted CLAUDE_PROJECT_DIR placeholder", () => {
+    // What Claude Code passes through if it did not substitute the placeholder.
+    process.env.PANTRYBASE_PROJECT_ROOT = "$" + "{CLAUDE_PROJECT_DIR}";
     delete process.env.CLAUDE_PROJECT_DIR;
     expect(resolveProjectRoot()).toBe(path.resolve(process.cwd()));
   });

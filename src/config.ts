@@ -10,6 +10,23 @@ export const DEFAULT_UI_PORT = 7433;
 /** Root of the installed package (works from src/ via tsx and from dist/ after tsup). */
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+let cachedVersion: string | undefined;
+/** The installed package's version (works from src/ and from the bundled dist/). */
+export function packageVersion(): string {
+  if (!cachedVersion) {
+    try {
+      cachedVersion = (
+        JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")) as {
+          version: string;
+        }
+      ).version;
+    } catch {
+      cachedVersion = "0.0.0";
+    }
+  }
+  return cachedVersion;
+}
+
 export function homeDir(): string {
   return process.env.PANTRYBASE_HOME ?? path.join(os.homedir(), ".pantrybase");
 }

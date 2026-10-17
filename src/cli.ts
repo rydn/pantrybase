@@ -1,13 +1,14 @@
-import { createRequire } from "node:module";
-import { dataPaths, log, resolveProjectRoot } from "./config.js";
+import { spawn } from "node:child_process";
+import { dataPaths, log, packageVersion, resolveProjectRoot } from "./config.js";
 import { openContext } from "./core/context.js";
 import { Embedder } from "./embeddings/model.js";
 import { reconcile } from "./files/reconcile.js";
 import type { StepResult } from "./install/claude.js";
 import { doctor, install, uninstall } from "./install/install.js";
 import { searchRecipes } from "./search/hybrid.js";
+import { startUiServer } from "./web/server.js";
 
-const pkg = createRequire(import.meta.url)("../package.json") as { version: string };
+const pkg = { version: packageVersion() };
 
 const USAGE = `pantrybase ${pkg.version}
 
@@ -26,6 +27,8 @@ Recipes (in ./pantrybase of the current directory)
                                   --reembed recomputes embeddings)
   pantrybase embed                embed pending chunks now
   pantrybase search <query…>      quick search from the terminal
+  pantrybase ui [--port N] [--open]
+                                  serve the web UI on 127.0.0.1 (default port 7433)
   pantrybase stats                counts and paths
   pantrybase version
 `;
@@ -96,6 +99,26 @@ async function main(argv: string[]): Promise<number> {
         `(${res.results.length} results, vector ${res.vector_used ? "used" : "not used"})`,
       );
       ctx.close();
+      return 0;
+    }
+    case "ui": {
+      const portArg = rest.indexOf("--port");
+      const ctx = openContext();
+      const ui = await startUiServer(ctx, {
+        port: portArg >= 0 ? Number(rest[portArg + 1]) : undefined,
+        version: pkg.version,
+      });
+      console.log(`pantrybase UI: ${ui.url}  (data: ${ctx.paths.data}) — Ctrl-C to stop`);
+      if (rest.includes("--open")) {
+        const opener =
+          process.platform === "darwin"
+            ? "open"
+            : process.platform === "win32"
+              ? "start"
+              : "xdg-open";
+        spawn(opener, [ui.url], { stdio: "ignore", detached: true }).unref();
+      }
+      await new Promise(() => {});
       return 0;
     }
     case "stats": {

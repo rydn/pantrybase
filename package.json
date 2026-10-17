@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.web.json",
     "check": "npm run lint && npm run typecheck && npm test",
     "validate": "claude plugin validate .",
-    "prepack": "npm run build:server",
+    "prepack": "npm run build",
     "version": "node scripts/sync-version.mjs && git add .claude-plugin/plugin.json"
   },
   "dependencies": {

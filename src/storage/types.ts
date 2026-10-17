@@ -94,6 +94,21 @@ export interface StorageAdapter {
   /** Move aliases (and pantry entry) from one ingredient to another and delete the first. */
   mergeIngredientRows(fromId: number, intoId: number): void;
 
+  // graph
+  graphRows(): {
+    recipes: Array<{ id: number; slug: string; title: string; doc: string }>;
+    uses: Array<{
+      recipe_id: number;
+      ingredient_id: number;
+      canonical: string;
+      staple: boolean;
+      category: string | null;
+    }>;
+    tags: Array<{ recipe_id: number; category: string; name: string }>;
+  };
+  /** Nearest recipes by the embedding of their title chunk (empty when nothing is embedded). */
+  similarRecipes(recipeId: number, k: number): Array<{ recipe_id: number; distance: number }>;
+
   // photo queue
   ingestByPath(path: string): IngestItem | undefined;
   ingestBySha(sha256: string): IngestItem | undefined;

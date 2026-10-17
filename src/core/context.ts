@@ -142,6 +142,7 @@ export function openContext(projectRoot?: string, opts: ContextOptions = {}): Ap
       return r;
     },
     close() {
+      embedQueue.stop();
       store.close();
       contexts.delete(root);
     },

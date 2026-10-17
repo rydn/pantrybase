@@ -838,6 +838,51 @@ export class SqliteAdapter implements StorageAdapter {
     });
   }
 
+  // ------------------------------------------------------------------ graph
+
+  graphRows() {
+    const recipes = this.s("SELECT id, slug, title, doc FROM recipes ORDER BY id").all() as Array<{
+      id: number;
+      slug: string;
+      title: string;
+      doc: string;
+    }>;
+    const uses = (
+      this.s(
+        `SELECT DISTINCT ri.recipe_id, ri.ingredient_id, i.canonical,
+                MAX(ri.staple OR i.is_staple) AS staple, i.category
+         FROM recipe_ingredients ri JOIN ingredients i ON i.id = ri.ingredient_id
+         GROUP BY ri.recipe_id, ri.ingredient_id`,
+      ).all() as Array<{
+        recipe_id: number;
+        ingredient_id: number;
+        canonical: string;
+        staple: number;
+        category: string | null;
+      }>
+    ).map((u) => ({ ...u, staple: u.staple === 1 }));
+    const tags = this.s(
+      `SELECT rt.recipe_id, t.category, t.name FROM recipe_tags rt JOIN tags t ON t.id = rt.tag_id`,
+    ).all() as Array<{ recipe_id: number; category: string; name: string }>;
+    return { recipes, uses, tags };
+  }
+
+  similarRecipes(recipeId: number, k: number): Array<{ recipe_id: number; distance: number }> {
+    const own = this.s(
+      `SELECT v.embedding FROM chunks c JOIN chunk_vec v ON v.chunk_id = c.id
+       WHERE c.recipe_id = ? AND c.kind IN ('blurb', 'title') ORDER BY c.kind = 'blurb' DESC LIMIT 1`,
+    ).get(recipeId) as { embedding: Buffer } | undefined;
+    if (!own) return [];
+    const rows = this.s(
+      `SELECT c.recipe_id, MIN(v.distance) AS distance
+       FROM (SELECT chunk_id, distance FROM chunk_vec WHERE embedding MATCH ? AND k = ? ORDER BY distance) v
+       JOIN chunks c ON c.id = v.chunk_id
+       WHERE c.recipe_id != ? AND c.kind IN ('blurb', 'title')
+       GROUP BY c.recipe_id ORDER BY distance LIMIT ?`,
+    ).all(own.embedding, k * 6, recipeId, k) as Array<{ recipe_id: number; distance: number }>;
+    return rows;
+  }
+
   // ------------------------------------------------------------ photo queue
 
   ingestByPath(path: string): IngestItem | undefined {

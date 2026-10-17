@@ -80,9 +80,19 @@ export function materialize(from: string): {
     path.join(pluginDir, "package.json"),
     `${JSON.stringify({ private: true, dependencies: { pantrybase: `file:../tmp/${packed.filename}` } }, null, 2)}\n`,
   );
+  // The tarball name only changes with the version, so npm would keep a stale copy of the same
+  // version; drop the old package and lockfile so the fresh tarball is always installed.
+  fs.rmSync(path.join(pluginDir, "node_modules", "pantrybase"), { recursive: true, force: true });
+  fs.rmSync(path.join(pluginDir, "package-lock.json"), { force: true });
   const inst = run("npm", ["install", "--omit=dev", "--no-audit", "--no-fund"], { cwd: pluginDir });
   if (!inst.ok) throw new Error(`npm install failed: ${tail(inst.stderr || inst.stdout)}`);
   const stableRoot = path.join(pluginDir, "node_modules", "pantrybase");
+  // Guard against a stale copy: the installed server bundle must be the one just packed.
+  const fresh = path.join(from, "dist", "server.js");
+  const installed = path.join(stableRoot, "dist", "server.js");
+  if (isDev && fs.existsSync(fresh) && fs.readFileSync(fresh, "utf8") !== fs.readFileSync(installed, "utf8")) {
+    throw new Error(`installed copy at ${stableRoot} does not match the freshly built package`);
+  }
   steps.push({ step: "install dependencies", ok: true, detail: stableRoot });
   return { stableRoot, version: packed.version, steps };
 }

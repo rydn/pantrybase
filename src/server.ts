@@ -1,12 +1,11 @@
-import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { log } from "./config.js";
+import { log, packageVersion } from "./config.js";
 import { closeAllContexts } from "./core/context.js";
 import { registerTools } from "./mcp/register.js";
 import { tools } from "./mcp/tools/index.js";
 
-const pkg = createRequire(import.meta.url)("../package.json") as { version: string };
+const pkg = { version: packageVersion() };
 
 async function main(): Promise<void> {
   if (process.argv.includes("--probe")) {

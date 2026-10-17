@@ -26,6 +26,11 @@ export function registerTools(server: McpServer, tools: ToolDef[]): void {
         };
         try {
           const ctx = openContext(project_root);
+          // Warm the embedding model in the background (memoised; ~0.1 s once cached).
+          ctx.embedder?.load().then(
+            () => ctx.embedQueue.kick(0),
+            () => {},
+          );
           ctx.sync();
           await maybeScanInbox(ctx);
           return await tool.handler(rest as never, ctx);
