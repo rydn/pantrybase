@@ -4,7 +4,7 @@ import { ALL_CATEGORIES } from "../../types.js";
  * Bump on any incompatible change. The DB is only an index over the markdown files, so a
  * version mismatch drops everything and the caller rebuilds from `recipes/*.md`.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** Tables dropped on a version change (virtual tables and triggers go with them). */
 export const ALL_TABLES = [
@@ -186,18 +186,27 @@ CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN
   DELETE FROM chunk_vec WHERE chunk_id = old.id;
 END;
 
+-- Photo queue. An index over the file system: a file's folder is its status (inbox/ pending,
+-- inbox/skipped|failed/, images/<slug>/ done), so this table can always be rebuilt by a scan.
 CREATE TABLE IF NOT EXISTS ingest_items (
   id INTEGER PRIMARY KEY,
   sha256 TEXT NOT NULL UNIQUE,
-  path TEXT NOT NULL,
-  mime TEXT,
-  group_id TEXT,
-  status TEXT NOT NULL CHECK (status IN ('pending','claimed','done','skipped','failed')),
-  claimed_at TEXT,
+  phash TEXT NOT NULL,
+  path TEXT NOT NULL UNIQUE,
+  original_name TEXT NOT NULL,
+  mime TEXT NOT NULL,
+  width INTEGER,
+  height INTEGER,
+  bytes INTEGER NOT NULL,
+  mtime INTEGER NOT NULL,
+  captured_at TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('pending','done','skipped','failed')),
   recipe_slug TEXT,
-  error TEXT,
-  created_at TEXT NOT NULL
+  side TEXT,
+  reason TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 );
-CREATE INDEX IF NOT EXISTS ingest_items_status ON ingest_items(status);
+CREATE INDEX IF NOT EXISTS ingest_items_status ON ingest_items(status, captured_at);
 `;
 }

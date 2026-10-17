@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { log } from "../config.js";
 import { openContext } from "../core/context.js";
+import { maybeScanInbox } from "../ingest/inbox.js";
 import { errorResult, type ToolDef } from "./define-tool.js";
 
 const projectRootField = {
@@ -26,6 +27,7 @@ export function registerTools(server: McpServer, tools: ToolDef[]): void {
         try {
           const ctx = openContext(project_root);
           ctx.sync();
+          await maybeScanInbox(ctx);
           return await tool.handler(rest as never, ctx);
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);

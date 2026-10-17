@@ -8,6 +8,9 @@ import type {
   DuplicateCandidate,
   FacetCategory,
   FileStat,
+  IngestCounts,
+  IngestItem,
+  IngestStatus,
   IngredientRow,
   Recipe,
   RecipeRecord,
@@ -743,5 +746,78 @@ export class SqliteAdapter implements StorageAdapter {
       vectors: one("SELECT COUNT(*) n FROM chunk_vec"),
       needs_review: one("SELECT COUNT(*) n FROM recipes WHERE needs_review = 1"),
     };
+  }
+
+  // ------------------------------------------------------------ photo queue
+
+  ingestByPath(path: string): IngestItem | undefined {
+    return this.s("SELECT * FROM ingest_items WHERE path = ?").get(path) as IngestItem | undefined;
+  }
+
+  ingestBySha(sha256: string): IngestItem | undefined {
+    return this.s("SELECT * FROM ingest_items WHERE sha256 = ?").get(sha256) as
+      | IngestItem
+      | undefined;
+  }
+
+  ingestByIds(ids: number[]): IngestItem[] {
+    if (ids.length === 0) return [];
+    const rows = this.s(`SELECT * FROM ingest_items WHERE id IN (${placeholders(ids.length)})`).all(
+      ...ids,
+    ) as IngestItem[];
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return ids.map((id) => byId.get(id)).filter((r): r is IngestItem => r !== undefined);
+  }
+
+  insertIngest(item: Omit<IngestItem, "id" | "created_at" | "updated_at">): IngestItem {
+    const now = new Date().toISOString();
+    const row = { ...item, created_at: now, updated_at: now };
+    const keys = Object.keys(row);
+    const info = this.s(
+      `INSERT INTO ingest_items(${keys.join(", ")}) VALUES (${keys.map((k) => `@${k}`).join(", ")})`,
+    ).run(row);
+    return { ...row, id: Number(info.lastInsertRowid) };
+  }
+
+  updateIngest(id: number, fields: Partial<Omit<IngestItem, "id" | "created_at">>): void {
+    const row = { ...fields, updated_at: new Date().toISOString() };
+    const sets = Object.keys(row)
+      .map((k) => `${k} = @${k}`)
+      .join(", ");
+    this.s(`UPDATE ingest_items SET ${sets} WHERE id = @id`).run({ ...row, id });
+  }
+
+  deleteIngest(id: number): void {
+    this.s("DELETE FROM ingest_items WHERE id = ?").run(id);
+  }
+
+  listIngest(opts: { status?: IngestStatus; limit?: number; offset?: number }): IngestItem[] {
+    return this.s(
+      `SELECT * FROM ingest_items ${opts.status ? "WHERE status = ?" : ""}
+       ORDER BY captured_at, original_name, id LIMIT ? OFFSET ?`,
+    ).all(
+      ...(opts.status ? [opts.status] : []),
+      opts.limit ?? 50,
+      opts.offset ?? 0,
+    ) as IngestItem[];
+  }
+
+  allIngest(): IngestItem[] {
+    return this.s(
+      "SELECT * FROM ingest_items ORDER BY captured_at, original_name, id",
+    ).all() as IngestItem[];
+  }
+
+  ingestCounts(): IngestCounts {
+    const counts: IngestCounts = { pending: 0, done: 0, skipped: 0, failed: 0 };
+    for (const r of this.s(
+      "SELECT status, COUNT(*) n FROM ingest_items GROUP BY status",
+    ).all() as Array<{
+      status: IngestStatus;
+      n: number;
+    }>) {
+      counts[r.status] = r.n;
+    }
+    return counts;
   }
 }

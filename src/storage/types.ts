@@ -3,6 +3,9 @@ import type {
   CatalogEntry,
   DuplicateCandidate,
   FileStat,
+  IngestCounts,
+  IngestItem,
+  IngestStatus,
   IngredientRow,
   Recipe,
   RecipeRecord,
@@ -73,4 +76,15 @@ export interface StorageAdapter {
   resetVectors(): void;
 
   stats(): Stats;
+
+  // photo queue
+  ingestByPath(path: string): IngestItem | undefined;
+  ingestBySha(sha256: string): IngestItem | undefined;
+  ingestByIds(ids: number[]): IngestItem[];
+  insertIngest(item: Omit<IngestItem, "id" | "created_at" | "updated_at">): IngestItem;
+  updateIngest(id: number, fields: Partial<Omit<IngestItem, "id" | "created_at">>): void;
+  deleteIngest(id: number): void;
+  listIngest(opts: { status?: IngestStatus; limit?: number; offset?: number }): IngestItem[];
+  allIngest(): IngestItem[];
+  ingestCounts(): IngestCounts;
 }

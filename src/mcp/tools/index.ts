@@ -1,5 +1,10 @@
 import type { ToolDef } from "../define-tool.js";
 import pb_get_recipe from "./pb_get_recipe.js";
+import pb_inbox_image from "./pb_inbox_image.js";
+import pb_inbox_list from "./pb_inbox_list.js";
+import pb_inbox_next from "./pb_inbox_next.js";
+import pb_inbox_resolve from "./pb_inbox_resolve.js";
+import pb_ingest_source from "./pb_ingest_source.js";
 import pb_list_tags from "./pb_list_tags.js";
 import pb_providers from "./pb_providers.js";
 import pb_rebuild from "./pb_rebuild.js";
@@ -13,6 +18,11 @@ export const tools: ToolDef[] = [
   pb_search,
   pb_list_tags,
   pb_providers,
+  pb_ingest_source,
+  pb_inbox_next,
+  pb_inbox_image,
+  pb_inbox_resolve,
+  pb_inbox_list,
   pb_stats,
   pb_rebuild,
 ] as unknown as ToolDef[];

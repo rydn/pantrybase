@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   splitting: true,
   // Native / heavy modules stay external so their own loaders and prebuilds work.
-  external: ["better-sqlite3", "sqlite-vec", "sharp", "@huggingface/transformers"],
+  external: ["better-sqlite3", "sqlite-vec", "sharp", "@huggingface/transformers", "heic-convert"],
 });

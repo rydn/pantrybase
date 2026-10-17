@@ -4,7 +4,7 @@ kind: onboarding
 tags: [onboarding, planned]
 related: [file:src/server.ts, file:src/tools/index.ts, file:src/storage/types.ts, file:src/storage/sqlite/adapter.ts, file:src/recipes, file:src/ingest, file:src/search, file:web, file:.claude-plugin/plugin.json, file:package.json]
 created: 2026-10-17T15:49:06.943Z
-updated: 2026-10-17T16:39:50.687Z
+updated: 2026-10-17T16:50:36.144Z
 ---
 
 # pantrybase — structure (planned layout, nothing built yet as of 2026-10-17)
@@ -38,5 +38,11 @@ Two kinds of locations: the **package** (this repo) and the **per-project data d
 - `src/recipes/enrich.ts` (provider rules → vocabulary) and `src/recipes/pipeline.ts` (`prepareRecipe`: enrich → resolve ingredients → rewrite step `uses`), shared by save and reconcile.
 - Storage v2: full record in `recipes.doc` JSON; `step_ingredients` graph edges; derived facets (allergen, equipment, technique, chef, provider, plan) in `tags`/`recipe_tags` with `origin='derived'`; schema-version mismatch drops and rebuilds from markdown.
 - Test fixtures from real UCOOK cards: `test/fixtures/ucook.ts`.
+
+## Added in Phase 3 (2026-10-17): photo ingestion
+- `src/ingest/images.ts`: sharp pipeline, HEIC via macOS `sips` (prebuilt sharp can't decode HEVC) or optional `heic-convert`; `imageForModel` (≤1600px, ≤750 KB JPEG); 64-bit dHash, `RETAKE_DISTANCE = 6` (real retake = 4, closest different cards = 10); capture time from filename → EXIF → mtime.
+- `src/ingest/inbox.ts`: queue state is the folder (`inbox/` pending, `inbox/skipped|failed/` + `.reason.txt`, `images/<slug>/` done, `inbox/duplicates/` byte-identical copies); `scanInbox` rebuilds `ingest_items` from disk; `importPaths`, `nextBatch` (retake hints), `resolveItems`, `planAttach`/`finalizeAttach` (photos move only after the markdown is written).
+- Tools: `pb_ingest_source`, `pb_inbox_next`, `pb_inbox_image` (MCP image block), `pb_inbox_resolve`, `pb_inbox_list`; `pb_save_recipe {ingest:[{id, side}]}`. No claim locking (single consumer).
+- Skill `skills/ingest/SKILL.md` → `/pantrybase:ingest`.
 
 Hotspots/entry points: `em_architecture` knows them.

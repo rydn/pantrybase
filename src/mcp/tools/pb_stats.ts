@@ -8,6 +8,7 @@ export default defineTool({
   handler: (_args, ctx) => {
     return text({
       ...ctx.store.stats(),
+      inbox: ctx.store.ingestCounts(),
       providers: ctx.providers.list().map((p) => p.id),
       data_dir: ctx.paths.data,
       embeddings: ctx.embedder ? (ctx.embedder.ready ? "ready" : "not loaded") : "disabled",

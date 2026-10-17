@@ -254,6 +254,32 @@ export interface DuplicateCandidate {
   score: number;
 }
 
+export const INGEST_STATUSES = ["pending", "done", "skipped", "failed"] as const;
+export type IngestStatus = (typeof INGEST_STATUSES)[number];
+
+export interface IngestItem {
+  id: number;
+  sha256: string;
+  phash: string;
+  /** Path relative to the data dir; its folder encodes the status. */
+  path: string;
+  original_name: string;
+  mime: string;
+  width: number | null;
+  height: number | null;
+  bytes: number;
+  mtime: number;
+  captured_at: string;
+  status: IngestStatus;
+  recipe_slug: string | null;
+  side: ImageSide | null;
+  reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type IngestCounts = Record<IngestStatus, number>;
+
 export interface Stats {
   recipes: number;
   ingredients: number;
