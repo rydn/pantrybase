@@ -143,6 +143,12 @@ node dist/cli.js install   # install the plugin from your checkout
 
 The code is TypeScript (ESM, Node 22+): `src/storage` (the `StorageAdapter` interface and its SQLite implementation), `src/recipes` (schema, provider rules and vocabulary, save pipeline), `src/ingest` (photo queue), `src/search`, `src/pantry`, `src/synthesis`, `src/graph`, `src/mcp/tools` (one file per tool), `src/web` (HTTP server) and `web/` (Preact app).
 
+### Releases
+
+Every merge to `main` publishes a new version to npm automatically (`.github/workflows/release.yml`): the workflow runs the full checks, picks the version from the commits since the last tag (breaking change → major, minor while 0.x · `feat:` → minor · anything else → patch), commits `chore(release): vX.Y.Z` with `package.json` and `.claude-plugin/plugin.json` in sync, tags it, publishes with npm provenance and creates a GitHub release. Pull requests run the CI matrix (Linux and macOS, Node 22 and 24) in `.github/workflows/ci.yml`.
+
+One-time setup for publishing — either link the repository as a [trusted publisher](https://docs.npmjs.com/trusted-publishers) for the `pantrybase` package (workflow file `release.yml`), or add an npm automation token as the repository secret `NPM_TOKEN`.
+
 ## License
 
 MIT

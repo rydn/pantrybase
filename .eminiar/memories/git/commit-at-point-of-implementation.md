@@ -4,11 +4,11 @@ kind: preference
 tags: [git, preference]
 related: []
 created: 2026-10-17T16:41:43.108Z
-updated: 2026-10-17T16:41:43.108Z
+updated: 2026-10-17T17:22:22.469Z
 ---
 
 Commit as soon as a unit of work is implemented and verified (lint + typecheck + tests pass, and the e2e check where relevant) — don't wait to be asked and don't batch several features into one commit. One focused commit per completed feature, phase or fix.
 
 Why: the user asked (2026-10-17) to "always commit at the point of implementation".
 
-How to apply: after each verified chunk of work, commit immediately with a descriptive conventional message, authored as the user with no Claude attribution (see [[git/commit-as-user-no-claude-attribution]]). Never commit failing or unverified work; never push unless asked.
+How to apply: after each verified chunk of work, commit immediately with a descriptive conventional message, authored as the user with no Claude attribution (see [[git/commit-as-user-no-claude-attribution]]). Never commit failing or unverified work; never push unless asked. Gate the commit mechanically: run checks and commit in one `set -e` / `&&` chain (or check the test output for failures first) — on 2026-10-17 a `;`-joined chain committed over a failing test and had to be amended.

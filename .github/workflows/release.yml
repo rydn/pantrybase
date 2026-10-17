@@ -1,0 +1,89 @@
+name: Release
+
+# Every merge to main publishes a new version to npm:
+#   breaking change → major (minor while 0.x) · feat → minor · anything else → patch.
+# The bump is committed back as "chore(release): vX.Y.Z" and tagged. Pushes made with the
+# workflow's GITHUB_TOKEN never trigger workflows again, and the release commit is skipped below.
+#
+# npm authentication, either of:
+#   - trusted publishing: on npmjs.com, link this repo + workflow (release.yml) to the package
+#   - a token: add an automation token as the repository secret NPM_TOKEN
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the version commit, tag and GitHub release
+  id-token: write # npm provenance and trusted publishing
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags and history decide the version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Use a recent npm (trusted publishing)
+        run: npm install -g npm@latest
+
+      - name: Install
+        run: npm ci
+
+      - name: Check
+        run: npm run check
+
+      - name: Decide version
+        id: version
+        run: npx tsx src/release/version.ts >> "$GITHUB_OUTPUT"
+
+      - name: Bump, commit and tag
+        if: steps.version.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$(node -p "require('./package.json').version")" = "$VERSION" ]; then
+            git tag "v$VERSION"            # first release: publish the version already in package.json
+          else
+            # Runs the "version" script, which syncs .claude-plugin/plugin.json.
+            npm version "$VERSION" -m "chore(release): v%s"
+          fi
+
+      - name: Push version commit and tag
+        if: steps.version.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Another merge may have landed while this ran: replay the release commit on top.
+          git pull --rebase origin main
+          git tag -f "v$VERSION"
+          git push origin HEAD:main
+          git push origin "v$VERSION"
+
+      - name: Publish to npm
+        if: steps.version.outputs.release == 'true'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: GitHub release
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "v$VERSION" --title "v$VERSION" --generate-notes --verify-tag
