@@ -1,0 +1,63 @@
+{
+  "name": "pantrybase",
+  "version": "0.1.0",
+  "description": "Local-first recipe knowledge base for Claude Code: MCP tools + web UI, SQLite FTS5 + vector search, markdown recipes as source of truth.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "bin": {
+    "pantrybase": "bin/pantrybase"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "skills",
+    "seed",
+    ".claude-plugin"
+  ],
+  "scripts": {
+    "build": "tsup && vite build",
+    "build:server": "tsup",
+    "build:web": "vite build",
+    "dev": "concurrently -n server,web \"tsup --watch\" \"vite\"",
+    "dev:server": "tsx watch src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.web.json",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "validate": "claude plugin validate .",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "better-sqlite3": "^13.0.3",
+    "fast-glob": "^3.3.3",
+    "sharp": "^0.35.5",
+    "sqlite-vec": "^0.1.9",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.19.0",
+    "concurrently": "^9.2.0",
+    "graphology": "^0.26.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-types": "^0.24.8",
+    "preact": "^11.0.1",
+    "preact-iso": "^2.9.0",
+    "sigma": "^4.0.3",
+    "tsup": "^9.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}

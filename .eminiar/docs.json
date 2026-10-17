@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "name": "better-sqlite3",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://github.com/WiseLibs/better-sqlite3/blob/master/docs/api.md"
+      ],
+      "provider": "npm:better-sqlite3",
+      "title": "better-sqlite3 API",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 30
+      },
+      "tags": [
+        "storage"
+      ],
+      "notes": "Database, prepare, transaction, pragma, loadExtension"
+    },
+    {
+      "name": "claude-code-plugins",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://code.claude.com/docs/en/plugins"
+      ],
+      "title": "Claude Code plugins",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 30
+      },
+      "tags": [
+        "mcp",
+        "install"
+      ],
+      "notes": "plugin.json / marketplace.json layout, mcpServers in plugins, skills, `claude plugin` CLI — the install target for pantrybase"
+    },
+    {
+      "name": "graphology",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://raw.githubusercontent.com/graphology/graphology/HEAD/README.md",
+        "https://github.com/graphology/graphology"
+      ],
+      "provider": "npm:graphology",
+      "title": "graphology",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 30
+      },
+      "tags": [
+        "ui",
+        "graph"
+      ],
+      "notes": "graph data structure + layouts (forceatlas2) feeding Sigma"
+    },
+    {
+      "name": "mcp-typescript-sdk",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://modelcontextprotocol.io",
+        "https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/HEAD/README.md",
+        "https://github.com/modelcontextprotocol/typescript-sdk"
+      ],
+      "provider": "npm:@modelcontextprotocol/sdk",
+      "title": "MCP TypeScript SDK",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 40
+      },
+      "tags": [
+        "mcp",
+        "core"
+      ],
+      "notes": "McpServer, registerTool, StdioServerTransport, image content blocks"
+    },
+    {
+      "name": "sigma-js",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://www.sigmajs.org",
+        "https://raw.githubusercontent.com/jacomyal/sigma.js/HEAD/README.md",
+        "https://github.com/jacomyal/sigma.js"
+      ],
+      "provider": "npm:sigma",
+      "title": "Sigma.js",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 30
+      },
+      "tags": [
+        "ui",
+        "graph"
+      ],
+      "notes": "WebGL graph renderer used by the web UI graph explorer"
+    },
+    {
+      "name": "sqlite-vec",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://alexgarcia.xyz/sqlite-vec/api-reference.html"
+      ],
+      "provider": "npm:sqlite-vec",
+      "title": "sqlite-vec",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 40
+      },
+      "tags": [
+        "storage",
+        "vector"
+      ],
+      "notes": "vec0 virtual tables, KNN MATCH queries, load() into better-sqlite3"
+    },
+    {
+      "name": "transformers-js",
+      "kind": "url",
+      "addedAt": "2026-10-17T15:48:37.068Z",
+      "urls": [
+        "https://huggingface.co/docs/transformers.js/index"
+      ],
+      "provider": "npm:@huggingface/transformers",
+      "title": "Transformers.js",
+      "crawl": {
+        "depth": 1,
+        "maxPages": 40
+      },
+      "tags": [
+        "embeddings"
+      ],
+      "notes": "feature-extraction pipeline, dtype q8, env.cacheDir, bge-small embeddings"
+    }
+  ]
+}

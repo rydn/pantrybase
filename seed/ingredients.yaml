@@ -1,0 +1,194 @@
+# Ingredient catalog seed. Copied to ./pantrybase/ingredients.yaml on first use; edit that copy.
+# canonical name: {aliases: [...], staple: true|false, category: ...}
+# Staples never count against pantry coverage.
+
+# --- staples -------------------------------------------------------------
+salt: {staple: true, category: seasoning, aliases: [sea salt, kosher salt, table salt, flaky salt, salt and pepper]}
+black pepper: {staple: true, category: seasoning, aliases: [pepper, ground black pepper, cracked black pepper]}
+water: {staple: true, category: other, aliases: [boiling water, cold water, warm water]}
+olive oil: {staple: true, category: oil, aliases: [extra virgin olive oil, evoo]}
+vegetable oil: {staple: true, category: oil, aliases: [oil, cooking oil, sunflower oil, rapeseed oil, canola oil, neutral oil]}
+butter: {staple: true, category: dairy, aliases: [unsalted butter, salted butter]}
+sugar: {staple: true, category: baking, aliases: [white sugar, granulated sugar, caster sugar]}
+brown sugar: {staple: true, category: baking, aliases: [light brown sugar, dark brown sugar, demerara sugar]}
+flour: {staple: true, category: baking, aliases: [plain flour, all-purpose flour, all purpose flour, wheat flour]}
+cornflour: {staple: true, category: baking, aliases: [cornstarch, corn starch, corn flour]}
+baking powder: {staple: true, category: baking}
+white wine vinegar: {staple: true, category: condiment}
+red wine vinegar: {staple: true, category: condiment}
+rice vinegar: {staple: true, category: condiment, aliases: [rice wine vinegar]}
+balsamic vinegar: {staple: true, category: condiment}
+soy sauce: {staple: true, category: condiment, aliases: [light soy sauce, dark soy sauce, shoyu, tamari]}
+honey: {staple: true, category: condiment}
+dijon mustard: {staple: true, category: condiment, aliases: [mustard, wholegrain mustard]}
+ketchup: {staple: true, category: condiment, aliases: [tomato ketchup]}
+mayonnaise: {staple: true, category: condiment, aliases: [mayo]}
+chicken stock: {staple: true, category: stock, aliases: [chicken broth, chicken stock cube, chicken stock pot, chicken bouillon]}
+vegetable stock: {staple: true, category: stock, aliases: [vegetable broth, veg stock, vegetable stock cube, vegetable stock pot, vegetable bouillon]}
+beef stock: {staple: true, category: stock, aliases: [beef broth, beef stock cube, beef stock pot]}
+garlic: {staple: true, category: vegetable, aliases: [garlic clove, garlic cloves, clove of garlic, minced garlic]}
+paprika: {staple: true, category: spice, aliases: [sweet paprika]}
+smoked paprika: {staple: true, category: spice}
+cumin: {staple: true, category: spice, aliases: [ground cumin, cumin seeds]}
+coriander seed: {staple: true, category: spice, aliases: [ground coriander, coriander seeds]}
+turmeric: {staple: true, category: spice, aliases: [ground turmeric]}
+cinnamon: {staple: true, category: spice, aliases: [ground cinnamon, cinnamon stick]}
+chilli flakes: {staple: true, category: spice, aliases: [chili flakes, red pepper flakes, crushed chillies, dried chilli flakes]}
+chilli powder: {staple: true, category: spice, aliases: [chili powder, cayenne pepper, cayenne]}
+curry powder: {staple: true, category: spice}
+garam masala: {staple: true, category: spice}
+dried oregano: {staple: true, category: herb, aliases: [oregano]}
+dried thyme: {staple: true, category: herb}
+mixed herbs: {staple: true, category: herb, aliases: [italian herbs, italian seasoning]}
+bay leaf: {staple: true, category: herb, aliases: [bay leaves]}
+sesame oil: {staple: true, category: oil, aliases: [toasted sesame oil]}
+
+# --- proteins ------------------------------------------------------------
+chicken breast: {category: protein, aliases: [chicken breasts, chicken breast fillet, diced chicken breast, chicken]}
+chicken thigh: {category: protein, aliases: [chicken thighs, boneless chicken thigh, chicken thigh fillet]}
+chicken drumstick: {category: protein, aliases: [chicken drumsticks]}
+whole chicken: {category: protein}
+beef mince: {category: protein, aliases: [ground beef, minced beef, beef mince 5%, lean beef mince]}
+beef steak: {category: protein, aliases: [sirloin steak, rump steak, steak, flat iron steak, bavette]}
+beef strips: {category: protein, aliases: [beef stir-fry strips, stir fry beef]}
+pork mince: {category: protein, aliases: [ground pork, minced pork]}
+pork loin: {category: protein, aliases: [pork loin steak, pork loin steaks, pork chop, pork chops]}
+pork belly: {category: protein}
+pork sausage: {category: protein, aliases: [sausages, pork sausages, cumberland sausage]}
+chorizo: {category: protein, aliases: [cooking chorizo, chorizo sausage]}
+bacon: {category: protein, aliases: [streaky bacon, bacon rashers, bacon lardons, smoked bacon, pancetta]}
+lamb mince: {category: protein, aliases: [ground lamb, minced lamb]}
+lamb leg steak: {category: protein, aliases: [lamb steak, lamb steaks]}
+turkey mince: {category: protein, aliases: [ground turkey, minced turkey]}
+salmon fillet: {category: seafood, aliases: [salmon, salmon fillets, skin-on salmon]}
+cod fillet: {category: seafood, aliases: [cod, cod fillets, white fish, white fish fillet, haddock, basa fillet]}
+sea bass fillet: {category: seafood, aliases: [sea bass]}
+prawns: {category: seafood, aliases: [king prawns, shrimp, raw prawns, prawn]}
+tuna: {category: seafood, aliases: [tinned tuna, canned tuna, tuna steak]}
+smoked salmon: {category: seafood}
+egg: {category: protein, aliases: [eggs, free-range egg, large egg, medium egg]}
+tofu: {category: protein, aliases: [firm tofu, extra firm tofu, smoked tofu]}
+halloumi: {category: dairy, aliases: [halloumi cheese]}
+paneer: {category: dairy}
+chickpeas: {category: legume, aliases: [chickpea, tinned chickpeas, canned chickpeas, garbanzo beans]}
+black beans: {category: legume, aliases: [tinned black beans, canned black beans]}
+kidney beans: {category: legume, aliases: [red kidney beans]}
+cannellini beans: {category: legume, aliases: [white beans, butter beans, haricot beans]}
+lentils: {category: legume, aliases: [red lentils, green lentils, puy lentils, dried lentils, tinned lentils]}
+
+# --- starches ------------------------------------------------------------
+rice: {category: grain, aliases: [basmati rice, long grain rice, white rice, jasmine rice, brown rice]}
+risotto rice: {category: grain, aliases: [arborio rice, carnaroli rice]}
+pasta: {category: grain, aliases: [penne, rigatoni, fusilli, conchiglie, dried pasta, pasta shapes]}
+spaghetti: {category: grain, aliases: [linguine, tagliatelle, bucatini]}
+orzo: {category: grain}
+gnocchi: {category: grain}
+egg noodles: {category: grain, aliases: [noodles, medium egg noodles, ramen noodles, udon noodles]}
+rice noodles: {category: grain, aliases: [vermicelli rice noodles, flat rice noodles, pad thai noodles]}
+potato: {category: vegetable, aliases: [potatoes, white potatoes, maris piper potatoes, baby potatoes, new potatoes]}
+sweet potato: {category: vegetable, aliases: [sweet potatoes]}
+couscous: {category: grain, aliases: [giant couscous, pearl couscous]}
+bulgur wheat: {category: grain, aliases: [bulgur]}
+quinoa: {category: grain}
+tortilla: {category: grain, aliases: [tortillas, flour tortillas, corn tortillas, wraps, tortilla wraps]}
+bread: {category: grain, aliases: [crusty bread, sourdough, baguette, ciabatta, bread roll, burger bun, brioche bun, pitta, pitta bread, naan, naan bread, flatbread]}
+breadcrumbs: {category: grain, aliases: [panko breadcrumbs, panko]}
+polenta: {category: grain}
+
+# --- vegetables ----------------------------------------------------------
+onion: {category: vegetable, aliases: [onions, brown onion, white onion, yellow onion]}
+red onion: {category: vegetable, aliases: [red onions]}
+shallot: {category: vegetable, aliases: [shallots, echalion shallot, banana shallot]}
+spring onion: {category: vegetable, aliases: [spring onions, scallions, scallion, green onion, green onions]}
+leek: {category: vegetable, aliases: [leeks]}
+carrot: {category: vegetable, aliases: [carrots]}
+celery: {category: vegetable, aliases: [celery stick, celery sticks]}
+bell pepper: {category: vegetable, aliases: [pepper, peppers, red pepper, green pepper, yellow pepper, orange pepper, red bell pepper, capsicum, mixed peppers]}
+courgette: {category: vegetable, aliases: [courgettes, zucchini]}
+aubergine: {category: vegetable, aliases: [aubergines, eggplant]}
+tomato: {category: vegetable, aliases: [tomatoes, vine tomatoes, plum tomatoes, salad tomatoes]}
+cherry tomatoes: {category: vegetable, aliases: [cherry tomato, baby plum tomatoes, cherry vine tomatoes]}
+chopped tomatoes: {category: vegetable, aliases: [tinned tomatoes, canned tomatoes, tin of tomatoes, finely chopped tomatoes, diced tomatoes, passata]}
+tomato puree: {category: condiment, aliases: [tomato paste, tomato purée]}
+broccoli: {category: vegetable, aliases: [tenderstem broccoli, broccolini, broccoli florets]}
+cauliflower: {category: vegetable, aliases: [cauliflower florets]}
+cabbage: {category: vegetable, aliases: [white cabbage, red cabbage, savoy cabbage, pointed cabbage, sweetheart cabbage]}
+kale: {category: vegetable, aliases: [cavolo nero, curly kale]}
+spinach: {category: vegetable, aliases: [baby spinach, spinach leaves]}
+lettuce: {category: vegetable, aliases: [little gem lettuce, romaine lettuce, iceberg lettuce, mixed salad leaves, salad leaves, rocket, arugula, baby leaf salad]}
+cucumber: {category: vegetable}
+green beans: {category: vegetable, aliases: [fine beans, french beans]}
+peas: {category: vegetable, aliases: [garden peas, frozen peas, petits pois]}
+sugar snap peas: {category: vegetable, aliases: [mangetout, snow peas]}
+sweetcorn: {category: vegetable, aliases: [corn, tinned sweetcorn, corn on the cob, corn cob]}
+mushroom: {category: vegetable, aliases: [mushrooms, chestnut mushrooms, closed cup mushrooms, button mushrooms, portobello mushroom, shiitake mushrooms]}
+butternut squash: {category: vegetable, aliases: [squash, pumpkin]}
+beetroot: {category: vegetable, aliases: [beets, cooked beetroot]}
+asparagus: {category: vegetable}
+pak choi: {category: vegetable, aliases: [bok choy, pak choy]}
+avocado: {category: fruit, aliases: [avocados]}
+ginger: {category: vegetable, aliases: [fresh ginger, root ginger, ginger paste, grated ginger]}
+red chilli: {category: vegetable, aliases: [chilli, chili, fresh chilli, red chili, green chilli, birds eye chilli, jalapeno, jalapeño]}
+lemon: {category: fruit, aliases: [lemons, lemon juice, lemon zest]}
+lime: {category: fruit, aliases: [limes, lime juice, lime zest]}
+orange: {category: fruit, aliases: [oranges, orange juice, orange zest]}
+apple: {category: fruit, aliases: [apples]}
+mango: {category: fruit, aliases: [mango chutney]}
+pomegranate: {category: fruit, aliases: [pomegranate seeds]}
+
+# --- herbs ---------------------------------------------------------------
+coriander: {category: herb, aliases: [fresh coriander, cilantro, coriander leaves]}
+parsley: {category: herb, aliases: [flat leaf parsley, flat-leaf parsley, fresh parsley, curly parsley]}
+basil: {category: herb, aliases: [fresh basil, basil leaves]}
+mint: {category: herb, aliases: [fresh mint, mint leaves]}
+dill: {category: herb, aliases: [fresh dill]}
+chives: {category: herb}
+thyme: {category: herb, aliases: [fresh thyme]}
+rosemary: {category: herb, aliases: [fresh rosemary]}
+sage: {category: herb}
+lemongrass: {category: herb}
+
+# --- dairy ---------------------------------------------------------------
+milk: {category: dairy, aliases: [whole milk, semi-skimmed milk, skimmed milk]}
+cream: {category: dairy, aliases: [double cream, single cream, heavy cream, whipping cream]}
+creme fraiche: {category: dairy, aliases: [crème fraîche, half fat creme fraiche]}
+sour cream: {category: dairy, aliases: [soured cream]}
+yoghurt: {category: dairy, aliases: [yogurt, greek yoghurt, greek yogurt, natural yoghurt, natural yogurt]}
+cheddar: {category: dairy, aliases: [cheddar cheese, mature cheddar, grated cheddar, grated cheese, cheese]}
+parmesan: {category: dairy, aliases: [parmesan cheese, grated parmesan, italian hard cheese, grana padano, pecorino]}
+mozzarella: {category: dairy, aliases: [mozzarella cheese, grated mozzarella]}
+feta: {category: dairy, aliases: [feta cheese]}
+goat's cheese: {category: dairy, aliases: [goats cheese, goat cheese, soft goat's cheese]}
+cream cheese: {category: dairy, aliases: [soft cheese, philadelphia]}
+mascarpone: {category: dairy}
+ricotta: {category: dairy}
+coconut milk: {category: other, aliases: [tinned coconut milk, canned coconut milk, coconut cream]}
+
+# --- condiments & flavourings ------------------------------------------
+harissa: {category: condiment, aliases: [harissa paste, rose harissa]}
+curry paste: {category: condiment, aliases: [thai red curry paste, thai green curry paste, red curry paste, green curry paste, massaman paste]}
+miso paste: {category: condiment, aliases: [miso, white miso, red miso]}
+fish sauce: {category: condiment}
+oyster sauce: {category: condiment}
+hoisin sauce: {category: condiment}
+sriracha: {category: condiment, aliases: [hot sauce, chilli sauce, sweet chilli sauce]}
+gochujang: {category: condiment, aliases: [korean chilli paste]}
+tahini: {category: condiment}
+peanut butter: {category: condiment}
+pesto: {category: condiment, aliases: [green pesto, basil pesto, red pesto]}
+capers: {category: condiment}
+olives: {category: condiment, aliases: [black olives, green olives, kalamata olives, pitted olives]}
+sun-dried tomatoes: {category: condiment, aliases: [sundried tomatoes]}
+worcestershire sauce: {category: condiment}
+white wine: {category: other}
+red wine: {category: other}
+sesame seeds: {category: nut, aliases: [toasted sesame seeds]}
+peanuts: {category: nut, aliases: [roasted peanuts, salted peanuts]}
+cashews: {category: nut, aliases: [cashew nuts]}
+almonds: {category: nut, aliases: [flaked almonds, toasted almonds, ground almonds]}
+pine nuts: {category: nut}
+walnuts: {category: nut}
+coconut: {category: other, aliases: [desiccated coconut, coconut flakes]}
+puff pastry: {category: baking, aliases: [ready rolled puff pastry]}
+chocolate: {category: baking, aliases: [dark chocolate, milk chocolate, chocolate chips]}
+vanilla extract: {category: baking, aliases: [vanilla]}

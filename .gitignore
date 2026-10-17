@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tgz
+.DS_Store
+.claude/settings.local.json
+
+# per-project data created when pantrybase is used inside this repo
+/pantrybase/
+
+# eminiar: keep memories and the docs manifest, drop caches
+.eminiar/*
+!.eminiar/memories/
+!.eminiar/docs.json
