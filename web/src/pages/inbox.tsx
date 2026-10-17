@@ -36,6 +36,20 @@ export function InboxPage() {
     await api.resolve([item.id], to, reasons[item.id]);
     inbox.reload();
   };
+  const [rotating, setRotating] = useState<number | null>(null);
+  const [rotateError, setRotateError] = useState<string | null>(null);
+  const rotate = async (item: InboxItem, degrees: 90 | 180 | 270) => {
+    setRotating(item.id);
+    setRotateError(null);
+    try {
+      await api.rotate(item.id, degrees);
+      inbox.reload();
+    } catch (e) {
+      setRotateError(`#${item.id}: ${String(e instanceof Error ? e.message : e)}`);
+    } finally {
+      setRotating(null);
+    }
+  };
 
   const counts = inbox.data?.counts;
   return (
@@ -103,14 +117,21 @@ export function InboxPage() {
         ))}
       </div>
 
+      {rotateError && <p class="error small">{rotateError}</p>}
+
       {inbox.data && inbox.data.items.length === 0 ? (
         <Empty>Nothing {status}.</Empty>
       ) : (
         <div class="thumbgrid">
           {inbox.data?.items.map((item) => (
             <div class="thumb" key={item.id}>
-              <a href={fileUrl(item.path, 1600)} target="_blank" rel="noreferrer">
-                <img src={fileUrl(item.path, 360)} alt={item.name} loading="lazy" />
+              <a href={fileUrl(item.path, 1600, item.version)} target="_blank" rel="noreferrer">
+                <img
+                  src={fileUrl(item.path, 360, item.version)}
+                  alt={item.name}
+                  loading="lazy"
+                  style={rotating === item.id ? { opacity: 0.4 } : undefined}
+                />
               </a>
               <div class="tb">
                 <div class="row" style={{ justifyContent: "space-between" }}>
@@ -125,6 +146,32 @@ export function InboxPage() {
                     retake of #{item.retake_of.id}
                   </Chip>
                 )}
+                {item.rotation_hint && (
+                  <Chip tone="warn" title={item.rotation_hint}>
+                    may be sideways
+                  </Chip>
+                )}
+                <fieldset class="row bare" aria-label={`Rotate photo ${item.id}`}>
+                  {(
+                    [
+                      [270, "↺", "Rotate left"],
+                      [90, "↻", "Rotate right"],
+                      [180, "180°", "Turn upside down"],
+                    ] as const
+                  ).map(([deg, label, title]) => (
+                    <button
+                      key={deg}
+                      type="button"
+                      class="small"
+                      title={title}
+                      aria-label={title}
+                      disabled={rotating !== null}
+                      onClick={() => rotate(item, deg)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </fieldset>
                 {item.recipe_slug && (
                   <a href={`/recipe/${item.recipe_slug}`}>→ {item.recipe_slug}</a>
                 )}

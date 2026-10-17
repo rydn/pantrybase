@@ -53,8 +53,13 @@ const filterParams = (f: Filters) => ({
 });
 
 /** URL for a photo in the data dir; `w` asks the server for a resized JPEG. */
-export const fileUrl = (rel: string, w?: number) =>
-  `/api/files/${rel.split("/").map(encodeURIComponent).join("/")}${w ? `?w=${w}` : ""}`;
+export const fileUrl = (rel: string, w?: number, version?: number) => {
+  const q = new URLSearchParams();
+  if (w) q.set("w", String(w));
+  if (version) q.set("v", String(version)); // changes after a rotation, so browsers refetch
+  const s = q.toString();
+  return `/api/files/${rel.split("/").map(encodeURIComponent).join("/")}${s ? `?${s}` : ""}`;
+};
 
 export const api = {
   stats: () => request<Stats>("GET", "/api/stats"),
@@ -106,4 +111,6 @@ export const api = {
     }),
   resolve: (ids: number[], status: "pending" | "skipped" | "failed", reason?: string) =>
     request("POST", "/api/inbox/resolve", { ids, status, reason }),
+  rotate: (id: number, degrees: 90 | 180 | 270) =>
+    request("POST", "/api/inbox/rotate", { id, degrees }),
 };

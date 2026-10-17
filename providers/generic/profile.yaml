@@ -6,6 +6,7 @@ sides:
   front: [title, photo]
   back: [ingredients, method]
 pairing: content
+orientation: null
 nutrition_basis: per_serving
 default_servings: null
 kitchen_section: null

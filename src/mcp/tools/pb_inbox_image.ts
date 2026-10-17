@@ -7,7 +7,7 @@ export default defineTool({
   name: "pb_inbox_image",
   description:
     "Show one queued (or archived) photo as an image, resized for reading (long edge ≤ 1600px by default; ask for up " +
-    "to 2400 if small print is unreadable). HEIC is converted automatically.",
+    "to 2400 if small print is unreadable). HEIC is converted automatically. If the text runs sideways or upside down, fix it with pb_inbox_rotate and look again.",
   schema: {
     id: z.number().int(),
     max_px: z.number().int().min(400).max(2400).optional(),

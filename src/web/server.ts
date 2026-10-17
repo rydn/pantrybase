@@ -5,7 +5,14 @@ import { DEFAULT_UI_PORT, log, packageRoot } from "../config.js";
 import type { AppContext } from "../core/context.js";
 import { buildGraph } from "../graph/build.js";
 import { openImage } from "../ingest/images.js";
-import { addUpload, maybeScanInbox, resolveItems, viewItem } from "../ingest/inbox.js";
+import {
+  addUpload,
+  maybeScanInbox,
+  resolveItems,
+  rotateItem,
+  viewItem,
+  viewItems,
+} from "../ingest/inbox.js";
 import {
   addToPantry,
   availableIngredients,
@@ -260,7 +267,7 @@ function routes(ctx: AppContext, version: string): Route[] {
       });
       return {
         counts: ctx.store.ingestCounts(),
-        items: items.map((i) => ({ ...viewItem(i, all), path: i.path })),
+        items: viewItems(items, all).map((v, n) => ({ ...v, path: items[n]?.path ?? "" })),
       };
     }),
     r("POST", /^\/api\/inbox\/upload$/, async (req) => {
@@ -270,6 +277,13 @@ function routes(ctx: AppContext, version: string): Route[] {
       if (data.length === 0) throw new HttpError(400, "empty upload");
       const item = await addUpload(ctx, name, data);
       return { item: item ? viewItem(item) : null, counts: ctx.store.ingestCounts() };
+    }),
+    r("POST", /^\/api\/inbox\/rotate$/, async (req) => {
+      const body = await readJson<{ id?: number; degrees?: number }>(req);
+      if (typeof body.id !== "number" || ![90, 180, 270].includes(body.degrees ?? 0)) {
+        throw new HttpError(400, "id and degrees (90|180|270, clockwise) required");
+      }
+      return { item: await rotateItem(ctx, body.id, body.degrees as 90 | 180 | 270) };
     }),
     r("POST", /^\/api\/inbox\/resolve$/, async (req) => {
       const body = await readJson<{ ids?: number[]; status?: string; reason?: string }>(req);

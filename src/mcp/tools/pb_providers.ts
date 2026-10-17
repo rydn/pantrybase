@@ -38,6 +38,7 @@ export default defineTool({
         `- Brands stripped from canonical names: ${p.brands.join(", ") || "none"}`,
         `- Kitchen items treated as equipment: ${Object.keys(p.equipment_terms).join(", ") || "none"}`,
         `- Nutrition basis default: ${p.nutrition_basis}; default servings: ${p.default_servings ?? "none"}`,
+        `- Upright card shape: ${p.orientation ?? "varies"} (photos that don't match are flagged with rotation_hint; fix them with pb_inbox_rotate)`,
         "",
         "## Tag vocabulary (closed = only these values; open = top values, new ones allowed)",
         ...Object.entries(summary).map(

@@ -73,6 +73,35 @@ export async function openImage(file: string): Promise<Sharp> {
   return sharp(input, { failOn: "none" }).rotate();
 }
 
+export const ROTATIONS = [90, 180, 270] as const;
+export type Rotation = (typeof ROTATIONS)[number];
+
+/**
+ * Rotate a photo clockwise and rewrite it in place, upright, with no EXIF orientation left
+ * to confuse other viewers. HEIC can't be written back, so it becomes a JPEG beside it.
+ * Returns the (possibly new) file path.
+ */
+export async function rotateFile(file: string, degrees: Rotation): Promise<string> {
+  const ext = path.extname(file).toLowerCase();
+  // EXIF orientation is applied first (one rotation per sharp pipeline), then ours.
+  const upright = await (await openImage(file)).toBuffer();
+  let pipeline = sharp(upright, { failOn: "none" }).rotate(degrees);
+  let target = file;
+  if (ext === ".png") pipeline = pipeline.png();
+  else if (ext === ".webp") pipeline = pipeline.webp({ quality: 92 });
+  else if (ext === ".tif" || ext === ".tiff") pipeline = pipeline.tiff();
+  else {
+    pipeline = pipeline.jpeg({ quality: 92, mozjpeg: true });
+    if (HEIF_EXTS.has(ext)) target = `${file.slice(0, -ext.length)}.jpg`;
+  }
+  const out = await pipeline.toBuffer();
+  const tmp = `${target}.rotating-${process.pid}`;
+  fs.writeFileSync(tmp, out);
+  fs.renameSync(tmp, target);
+  if (target !== file) fs.rmSync(file, { force: true });
+  return target;
+}
+
 /** JPEG sized for the model: long edge ≤ maxPx, quality stepped down until under the byte budget. */
 export async function imageForModel(
   file: string,

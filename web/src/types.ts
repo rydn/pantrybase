@@ -139,6 +139,8 @@ export interface InboxItem {
   recipe_slug?: string;
   reason?: string;
   retake_of?: { id: number; status: string; recipe_slug?: string; distance: number };
+  rotation_hint?: string;
+  version: number;
   path: string;
 }
 

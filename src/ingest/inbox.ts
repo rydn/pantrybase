@@ -10,7 +10,14 @@ import type {
   IngestItem,
   IngestStatus,
 } from "../types.js";
-import { hamming, inspectImage, isImageFile, RETAKE_DISTANCE } from "./images.js";
+import {
+  hamming,
+  inspectImage,
+  isImageFile,
+  RETAKE_DISTANCE,
+  type Rotation,
+  rotateFile,
+} from "./images.js";
 
 /**
  * The photo queue lives on disk; a file's folder is its status:
@@ -296,6 +303,39 @@ export interface QueueItemView {
   reason?: string;
   /** Probably the same side of the same card as this other photo. */
   retake_of?: { id: number; status: IngestStatus; recipe_slug?: string; distance: number };
+  /** Shape differs from most photos in the queue: check it isn't sideways (pb_inbox_rotate). */
+  rotation_hint?: string;
+  /** Changes whenever the file does (e.g. after a rotation); use it to bust image caches. */
+  version: number;
+}
+
+type Shape = "landscape" | "portrait" | "square";
+
+function shapeOf(item: Pick<IngestItem, "width" | "height">): Shape {
+  const w = item.width ?? 0;
+  const h = item.height ?? 0;
+  if (w > h * 1.1) return "landscape";
+  if (h > w * 1.1) return "portrait";
+  return "square";
+}
+
+/** The shape most photos have, when a clear majority (≥ 70% of ≥ 3 photos) agrees. */
+function dominantShape(all: IngestItem[]): Shape | null {
+  const counts = { landscape: 0, portrait: 0, square: 0 };
+  for (const i of all) if (i.width && i.height) counts[shapeOf(i)]++;
+  const total = counts.landscape + counts.portrait + counts.square;
+  if (total < 3) return null;
+  const [shape, n] = (Object.entries(counts) as Array<[Shape, number]>).sort(
+    (a, b) => b[1] - a[1],
+  )[0] ?? ["square", 0];
+  return shape !== "square" && n / total >= 0.7 ? shape : null;
+}
+
+function rotationHint(item: IngestItem, dominant: Shape | null): string | undefined {
+  if (!dominant) return undefined;
+  const shape = shapeOf(item);
+  if (shape === "square" || shape === dominant) return undefined;
+  return `${shape} while most photos are ${dominant} — it may be sideways; if the text doesn't read upright, pb_inbox_rotate it`;
 }
 
 function retakeHint(item: IngestItem, all: IngestItem[]): QueueItemView["retake_of"] {
@@ -311,31 +351,84 @@ function retakeHint(item: IngestItem, all: IngestItem[]): QueueItemView["retake_
   return best;
 }
 
-export function viewItem(item: IngestItem, all?: IngestItem[]): QueueItemView {
+export function viewItem(
+  item: IngestItem,
+  all?: IngestItem[],
+  dominant: Shape | null = all ? dominantShape(all) : null,
+): QueueItemView {
   const v: QueueItemView = {
     id: item.id,
     name: item.original_name,
     captured_at: item.captured_at,
     size: `${item.width}x${item.height}`,
     status: item.status,
+    version: item.mtime,
   };
   if (item.recipe_slug) v.recipe_slug = item.recipe_slug;
   if (item.reason) v.reason = item.reason;
   if (all) {
     const r = retakeHint(item, all);
     if (r) v.retake_of = r;
+    const hint = rotationHint(item, dominant);
+    if (hint) v.rotation_hint = hint;
   }
   return v;
 }
 
-/** The next pending photos in capture order, with retake hints and overall progress. */
+/** Views for a set of photos, computing the queue's dominant shape once. */
+export function viewItems(items: IngestItem[], all: IngestItem[]): QueueItemView[] {
+  const dominant = dominantShape(all);
+  return items.map((i) => viewItem(i, all, dominant));
+}
+
+/** The next pending photos in capture order, with retake/rotation hints and overall progress. */
 export function nextBatch(
   ctx: AppContext,
   window = 4,
 ): { progress: IngestCounts; items: QueueItemView[] } {
   const all = ctx.store.allIngest();
   const items = all.filter((i) => i.status === "pending").slice(0, Math.max(1, window));
-  return { progress: ctx.store.ingestCounts(), items: items.map((i) => viewItem(i, all)) };
+  return { progress: ctx.store.ingestCounts(), items: viewItems(items, all) };
+}
+
+/**
+ * Turn a photo upright (clockwise degrees) on disk and refresh its index entry: new bytes, hash,
+ * fingerprint and dimensions. Archived photos are rotated in place; HEIC turns into JPEG, which
+ * would rename a file a recipe already points at, so that case is refused for archived photos.
+ */
+export async function rotateItem(
+  ctx: AppContext,
+  id: number,
+  degrees: Rotation,
+): Promise<QueueItemView> {
+  const [item] = ctx.store.ingestByIds([id]);
+  if (!item) throw new Error(`no photo #${id}`);
+  const abs = path.join(ctx.paths.data, item.path);
+  if (!fs.existsSync(abs)) throw new Error(`photo #${id} is missing on disk (${item.path})`);
+  const heif = /\.(heic|heif)$/i.test(abs);
+  if (item.status === "done" && heif) {
+    throw new Error(
+      `photo #${id} is an archived HEIC; rotating would rename the file ${item.recipe_slug} uses`,
+    );
+  }
+  const target = await rotateFile(abs, degrees);
+  const info = await inspectImage(target);
+  const rel = relativeToData(ctx.paths, target);
+  const clash = ctx.store.ingestBySha(info.sha256);
+  if (clash && clash.id !== item.id)
+    throw new Error(`rotated photo #${id} is identical to #${clash.id}`);
+  ctx.store.updateIngest(item.id, {
+    path: rel,
+    sha256: info.sha256,
+    phash: info.phash,
+    width: info.width,
+    height: info.height,
+    bytes: info.bytes,
+    mtime: info.mtime,
+    mime: info.mime,
+  });
+  const updated = ctx.store.ingestByIds([id])[0] ?? item;
+  return viewItem(updated, ctx.store.allIngest());
 }
 
 /** Move photos to skipped/ or failed/ (with a reason file), or back to the inbox. */

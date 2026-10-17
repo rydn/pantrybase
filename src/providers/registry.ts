@@ -11,6 +11,8 @@ export interface ProviderProfile {
   recognise: string[];
   sides: { front: string[]; back: string[] };
   pairing: "front-then-back" | "content";
+  /** How an upright card is shaped, if the provider prints them consistently. */
+  orientation: "landscape" | "portrait" | null;
   nutrition_basis: "per_100g" | "per_serving";
   default_servings: number | null;
   kitchen_section: string | null;
@@ -45,6 +47,7 @@ function loadProfile(dir: string): ProviderProfile | null {
     recognise: raw.recognise ?? [],
     sides: { front: raw.sides?.front ?? [], back: raw.sides?.back ?? [] },
     pairing: raw.pairing ?? "content",
+    orientation: raw.orientation ?? null,
     nutrition_basis: raw.nutrition_basis ?? "per_serving",
     default_servings: raw.default_servings ?? null,
     kitchen_section: raw.kitchen_section ?? null,

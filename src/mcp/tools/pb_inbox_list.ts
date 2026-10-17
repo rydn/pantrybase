@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { viewItem } from "../../ingest/inbox.js";
+import { viewItems } from "../../ingest/inbox.js";
 import { INGEST_STATUSES } from "../../types.js";
 import { defineTool, text } from "../define-tool.js";
 
@@ -14,6 +14,9 @@ export default defineTool({
   },
   handler: ({ status, limit, offset }, ctx) => {
     const items = ctx.store.listIngest({ status, limit: limit ?? 20, offset });
-    return text({ counts: ctx.store.ingestCounts(), items: items.map((i) => viewItem(i)) });
+    return text({
+      counts: ctx.store.ingestCounts(),
+      items: viewItems(items, ctx.store.allIngest()),
+    });
   },
 });

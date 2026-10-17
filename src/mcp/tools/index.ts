@@ -4,6 +4,7 @@ import pb_inbox_image from "./pb_inbox_image.js";
 import pb_inbox_list from "./pb_inbox_list.js";
 import pb_inbox_next from "./pb_inbox_next.js";
 import pb_inbox_resolve from "./pb_inbox_resolve.js";
+import pb_inbox_rotate from "./pb_inbox_rotate.js";
 import pb_ingest_source from "./pb_ingest_source.js";
 import pb_list_tags from "./pb_list_tags.js";
 import pb_merge_ingredients from "./pb_merge_ingredients.js";
@@ -33,6 +34,7 @@ export const tools: ToolDef[] = [
   pb_ingest_source,
   pb_inbox_next,
   pb_inbox_image,
+  pb_inbox_rotate,
   pb_inbox_resolve,
   pb_inbox_list,
   pb_save_recipe,

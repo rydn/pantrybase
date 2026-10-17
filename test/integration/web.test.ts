@@ -189,6 +189,21 @@ describe("web UI server", () => {
     expect(thumb.type).toBe("image/jpeg");
     expect((await sharp(thumb.body).metadata()).width).toBe(200);
 
+    const id = inbox.items[0]?.id;
+    expect((await req(ui, "POST", "/api/inbox/rotate", { body: { id, degrees: 90 } })).status).toBe(
+      403,
+    );
+    expect(
+      (await req(ui, "POST", "/api/inbox/rotate", { body: { id, degrees: 45 }, headers: W }))
+        .status,
+    ).toBe(400);
+    const turned = (
+      await req(ui, "POST", "/api/inbox/rotate", { body: { id, degrees: 90 }, headers: W })
+    ).json() as {
+      item: { size: string };
+    };
+    expect(turned.item.size).toBe("600x900");
+
     const resolved = await req(ui, "POST", "/api/inbox/resolve", {
       body: { ids: [inbox.items[0]?.id], status: "skipped", reason: "test" },
       headers: W,

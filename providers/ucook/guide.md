@@ -1,6 +1,6 @@
 # UCOOK card extraction guide
 
-UCOOK (South Africa) cards are landscape, two-sided. Read every photo of a card before saving. Save with `provider: {id: "ucook", …}` and `source: {kind: "card"}`.
+UCOOK (South Africa) cards are landscape, two-sided. Read every photo of a card before saving. A card photo that is taller than it is wide, or whose text runs sideways or upside down, needs `pb_inbox_rotate` (clockwise degrees) before you read it. Save with `provider: {id: "ucook", …}` and `source: {kind: "card"}`.
 
 ## Front (photo left, text panel right)
 

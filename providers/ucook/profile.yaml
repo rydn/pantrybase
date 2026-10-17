@@ -9,6 +9,8 @@ sides:
   back: [Ingredients & Prep, From Your Kitchen, Nutritional Information, Allergens, Eat Within]
 # Photos are usually shot front then back; the back carries no title, so pair by order and content.
 pairing: front-then-back
+# Upright cards are wider than tall; a portrait photo of one is almost certainly sideways.
+orientation: landscape
 nutrition_basis: per_100g
 default_servings: 2
 # Heading of the card section listing what you supply yourself (ingredients get source: kitchen).

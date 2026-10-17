@@ -8,7 +8,7 @@ export default defineTool({
     "The next pending inbox photos in capture order, plus queue progress. Cards are usually shot front then back " +
     "(a back has no title), so look at the photos in order with pb_inbox_image, group the ones that belong to one card, " +
     "and save it with pb_save_recipe {ingest:[{id, side}]}. `retake_of` flags a near-identical photo: attach it as an " +
-    "extra image or skip it with pb_inbox_resolve.",
+    "extra image or skip it with pb_inbox_resolve. `rotation_hint` flags a photo whose shape differs from the rest — rotate it with pb_inbox_rotate if it reads sideways.",
   schema: {
     window: z
       .number()
