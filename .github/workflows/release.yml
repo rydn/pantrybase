@@ -27,15 +27,15 @@ jobs:
     if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # tags and history decide the version
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
           registry-url: https://registry.npmjs.org
+          # no dependency cache in a publishing job (cache-poisoning guidance)
 
       - name: Use a recent npm (trusted publishing)
         run: npm install -g npm@latest
@@ -64,7 +64,7 @@ jobs:
             npm version "$VERSION" -m "chore(release): v%s"
           fi
 
-      - name: Push version commit and tag
+      - name: Catch up with main
         if: steps.version.outputs.release == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -72,14 +72,22 @@ jobs:
           # Another merge may have landed while this ran: replay the release commit on top.
           git pull --rebase origin main
           git tag -f "v$VERSION"
-          git push origin HEAD:main
-          git push origin "v$VERSION"
 
+      # Publish before pushing anything: if npm refuses, no tag or version commit reaches GitHub
+      # and the next run simply retries the same version.
       - name: Publish to npm
         if: steps.version.outputs.release == 'true'
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push version commit and tag
+        if: steps.version.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git push origin HEAD:main
+          git push origin "v$VERSION"
 
       - name: GitHub release
         if: steps.version.outputs.release == 'true'
