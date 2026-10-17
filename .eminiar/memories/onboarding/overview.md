@@ -1,21 +1,19 @@
 ---
 name: onboarding/overview
 kind: onboarding
-tags: [onboarding, planned]
+tags: [onboarding]
 related: []
 created: 2026-10-17T15:49:06.935Z
-updated: 2026-10-17T15:49:06.935Z
+updated: 2026-10-17T17:20:45.227Z
 ---
 
 # pantrybase — overview
 
-**Status (2026-10-17): greenfield, no code yet.** These onboarding notes describe the agreed design; refresh them once the first milestone lands.
+**Status (2026-10-17): phases 1–7 done** (core store + search, v2 metadata + providers + vocabulary, file sync, photo ingestion, pantry + synthesis, Claude Code plugin + installer, web UI, README/polish). **Next: Phase 8 — GitHub Actions CI and npm publish on every merge to main** (see `release/ci-and-npm-publish-on-merge`). The npm name `pantrybase` was free on 2026-10-17; not yet published. The plugin is installed on the owner's machine via `node dist/cli.js install`.
 
-pantrybase is a personal recipe knowledge base for a few hundred meal-box recipe cards the owner has as **photos/scans**. It is two things in one npm package:
+pantrybase is a local-first recipe knowledge base for meal-box recipe cards photographed by the owner (UCOOK, South Africa, first). It is one npm package that is:
 
-- A **Claude Code MCP plugin** (`pb_*` tools over stdio). Claude reads each card image via the MCP, extracts structured data (title, ingredients with qty/unit, steps, times, servings) and auto-generates tags (protein, vegetarian/vegan, starch, flavor profile, cuisine, cook time…), then saves it. Later Claude searches the base (hybrid keyword + semantic), filters by tags, matches against the pantry inventory, and pulls a compact "synthesis context" to write new recipes from existing ones.
-- A **local web UI** (Preact, served by the same Node process on 127.0.0.1) for browsing/searching with facets, managing the pantry ("what can I cook"), uploading photos into the ingest queue, and exploring the recipe/ingredient/tag graph (Sigma.js + graphology).
+- A **Claude Code plugin**: 19 `pb_*` MCP tools over stdio plus skills `/pantrybase:ingest` (photo queue → structured recipes) and `/pantrybase:cook` (search, pantry match, synthesis). Claude reads each card image via `pb_inbox_image` and saves with `pb_save_recipe {ingest:[…]}` — no API keys.
+- A **local web UI** (`pantrybase ui` / `pb_open_ui`, 127.0.0.1:7433): faceted search, recipe pages, pantry + what-can-I-cook, inbox upload, tag browser, Sigma graph explorer.
 
-Runtime pieces: Node ≥22 ESM TypeScript server; SQLite (better-sqlite3 + sqlite-vec + FTS5) behind a `StorageAdapter` interface so another DB can replace it; in-process embeddings with Transformers.js (`Xenova/bge-small-en-v1.5`, 384d, q8). Recipes are **markdown files with YAML frontmatter under `./pantrybase/recipes/` and are the source of truth** — the DB is a rebuildable index. Modelled closely on the owner's earlier tool eminiar (installed at `~/.eminiar/plugin/node_modules/eminiar`): same install flow, tool-definition pattern, hybrid-search fusion and markdown reconcile approach.
-
-Who it is for: the owner (single user, local-first, no API keys — extraction is Claude-in-the-loop), with the package shaped so others can `npx pantrybase install`.
+Runtime: Node ≥22.12 ESM TypeScript; SQLite (better-sqlite3 + sqlite-vec + FTS5 porter/trigram) behind `StorageAdapter`; local embeddings (Transformers.js `Xenova/bge-small-en-v1.5`, 384d, q8); weighted RRF fusion. **Recipes are markdown with YAML frontmatter under `<project>/pantrybase/recipes/` and are the source of truth**; the DB, the photo queue and the graph are rebuildable from files. Provider support is modular (`providers/<id>/profile.yaml + guide.md`). Modelled on the owner's eminiar tool.

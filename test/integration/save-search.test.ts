@@ -13,6 +13,14 @@ describe("save + search", () => {
   });
   afterEach(() => t.dispose());
 
+  it("sets up the data folder so recipes and photos can be committed but the index can't", () => {
+    const ignore = fs.readFileSync(path.join(t.ctx.paths.data, ".gitignore"), "utf8");
+    expect(ignore).toContain("pantrybase.db\n");
+    expect(ignore).toContain("pantrybase.db-*");
+    const rules = ignore.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+    expect(rules.some((r) => /recipes|images|\.yaml/.test(r))).toBe(false);
+  });
+
   it("writes markdown, indexes, resolves ingredients against the seed", async () => {
     const res = saveRecipe(t.ctx, harissaChicken);
     expect(res.saved).toBe(true);

@@ -79,6 +79,34 @@
       "notes": "McpServer, registerTool, StdioServerTransport, image content blocks"
     },
     {
+      "name": "pantrybase-provider-guides",
+      "kind": "path",
+      "addedAt": "2026-10-17T17:20:45.239Z",
+      "path": "providers",
+      "glob": [
+        "**/*.md",
+        "**/*.yaml"
+      ],
+      "title": "Provider profiles and extraction guides",
+      "tags": [
+        "local",
+        "providers"
+      ],
+      "notes": "UCOOK and generic card-reading guides and normalisation rules"
+    },
+    {
+      "name": "pantrybase-readme",
+      "kind": "path",
+      "addedAt": "2026-10-17T17:20:45.239Z",
+      "path": "README.md",
+      "title": "pantrybase README",
+      "tags": [
+        "local",
+        "docs"
+      ],
+      "notes": "Install, quick start, data layout, tools, web UI, providers, vocabulary, search, CLI, development"
+    },
+    {
       "name": "sigma-js",
       "kind": "url",
       "addedAt": "2026-10-17T15:48:37.068Z",

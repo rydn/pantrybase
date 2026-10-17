@@ -90,7 +90,11 @@ export function materialize(from: string): {
   // Guard against a stale copy: the installed server bundle must be the one just packed.
   const fresh = path.join(from, "dist", "server.js");
   const installed = path.join(stableRoot, "dist", "server.js");
-  if (isDev && fs.existsSync(fresh) && fs.readFileSync(fresh, "utf8") !== fs.readFileSync(installed, "utf8")) {
+  if (
+    isDev &&
+    fs.existsSync(fresh) &&
+    fs.readFileSync(fresh, "utf8") !== fs.readFileSync(installed, "utf8")
+  ) {
     throw new Error(`installed copy at ${stableRoot} does not match the freshly built package`);
   }
   steps.push({ step: "install dependencies", ok: true, detail: stableRoot });

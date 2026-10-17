@@ -1,7 +1,7 @@
 {
   "name": "pantrybase",
   "version": "0.1.0",
-  "description": "Local-first recipe knowledge base for Claude Code: MCP tools + web UI, SQLite FTS5 + vector search, markdown recipes as source of truth.",
+  "description": "Local-first recipe knowledge base for Claude Code: capture meal-box recipe cards from photos, search by ingredient, tag, allergen or mood, match recipes to your pantry, explore them as a graph, and synthesize new ones.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -12,12 +12,14 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "bin",
     "skills",
     "seed/ingredients.yaml",
     "seed/vocabulary.yaml",
     "providers",
-    ".claude-plugin"
+    ".claude-plugin",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup && vite build",

@@ -74,10 +74,20 @@ export function dataPaths(projectRoot: string): DataPaths {
   };
 }
 
+/** Written once into a new data dir: recipes, photos and config are worth committing; the index isn't. */
+const DATA_GITIGNORE = `# pantrybase: the database is a rebuildable index of recipes/*.md
+pantrybase.db
+pantrybase.db-*
+# byte-identical copies of photos that were already imported
+inbox/duplicates/
+`;
+
 export function ensureDataDirs(p: DataPaths): void {
   for (const dir of [p.data, p.recipes, p.inbox, p.images]) {
     fs.mkdirSync(dir, { recursive: true });
   }
+  const ignore = path.join(p.data, ".gitignore");
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, DATA_GITIGNORE);
 }
 
 /** All diagnostics go to stderr: stdout belongs to the MCP transport. */
