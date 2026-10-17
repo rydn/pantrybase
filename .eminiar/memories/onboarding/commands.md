@@ -4,12 +4,12 @@ kind: onboarding
 tags: [onboarding, planned]
 related: []
 created: 2026-10-17T15:49:18.629Z
-updated: 2026-10-17T16:09:54.139Z
+updated: 2026-10-17T17:02:53.458Z
 ---
 
 # pantrybase — commands
 
-**Verified 2026-10-17 (Phase 1):** `npm install`, `npx biome check .`, `npx tsc --noEmit -p tsconfig.json`, `npx vitest run` (11 tests), `npx tsup` → `node dist/server.js --probe`. A full stdio round-trip test lives outside the repo for now (spawn `dist/server.js` with the SDK `Client`, call `pb_save_recipe` then `pb_search`). Model cache `~/.pantrybase/models` is 34 MB; first download took a few minutes, later loads ~80 ms. `PANTRYBASE_NO_EMBED=1` disables the model. `install`, `ui`, `doctor` CLI commands and the web build are NOT implemented yet (Phase 5/6); the CLI today has `rebuild [--full]`, `embed`, `search <q>`, `stats`.
+**Verified 2026-10-17 (Phase 1):** `npm install`, `npx biome check .`, `npx tsc --noEmit -p tsconfig.json`, `npx vitest run` (11 tests), `npx tsup` → `node dist/server.js --probe`. A full stdio round-trip test lives outside the repo for now (spawn `dist/server.js` with the SDK `Client`, call `pb_save_recipe` then `pb_search`). Model cache `~/.pantrybase/models` is 34 MB; first download took a few minutes, later loads ~80 ms. `PANTRYBASE_NO_EMBED=1` disables the model. **Phase 5 (2026-10-17):** `pantrybase install [--no-model] [--no-register]` packs the package (building from source in a dev checkout), installs it with production deps into `~/.pantrybase/plugin/node_modules/pantrybase`, pins `~/.pantrybase/node-path` + `root-path`, smoke-tests native modules + MCP probe, pre-downloads the model, then `claude plugin marketplace add <stable root>` + `claude plugin install pantrybase@pantrybase --scope user` (re-run = update). `pantrybase doctor`, `pantrybase uninstall [--purge]`. Test installs safely with `PANTRYBASE_HOME=$(mktemp -d) node dist/cli.js install --no-register`. Validate manifests: `claude plugin validate --strict .` and `… .claude-plugin/plugin.json`. Check the live server: `claude mcp list` → `plugin:pantrybase:pantrybase ✔ Connected`. After code changes, re-run `pantrybase install` (or `node dist/cli.js install`) so the plugin picks them up. `prepack` builds the server only until the web UI exists (Phase 6). The web UI (`ui`) is not built yet.
 
 Environment verified 2026-10-17: Node 25.2.1, npm 11.6.2, pnpm 10.27.0, Claude Code 2.1.292 at `/opt/homebrew/bin/claude`, Apple Silicon. `better-sqlite3` 13.0.3 ships a darwin-arm64 prebuild that loads on Node 25 with `sqlite-vec` 0.1.9 (FTS5 trigram confirmed), and `sharp` 0.35.5 has darwin-arm64 prebuilds — no native compile expected.
 

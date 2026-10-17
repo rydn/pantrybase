@@ -32,7 +32,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.web.json",
     "check": "npm run lint && npm run typecheck && npm test",
     "validate": "claude plugin validate .",
-    "prepack": "npm run build"
+    "prepack": "npm run build:server",
+    "version": "node scripts/sync-version.mjs && git add .claude-plugin/plugin.json"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.1",
@@ -64,5 +65,21 @@
   },
   "optionalDependencies": {
     "heic-convert": "^2.1.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rydn/pantrybase.git"
+  },
+  "homepage": "https://github.com/rydn/pantrybase#readme",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "mcp",
+    "recipes",
+    "pantry",
+    "meal-kit",
+    "sqlite",
+    "vector-search"
+  ],
+  "author": "Ryan Dick"
 }

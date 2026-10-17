@@ -1,0 +1,21 @@
+{
+  "name": "pantrybase",
+  "displayName": "Pantrybase",
+  "version": "0.1.0",
+  "description": "Local-first recipe knowledge base for Claude Code: capture meal-box recipe cards from photos, search by ingredient, tag, allergen or mood, match recipes to your pantry, and synthesize new recipes. SQLite FTS5 + vector search, markdown recipes as the source of truth.",
+  "author": {
+    "name": "Ryan Dick"
+  },
+  "license": "MIT",
+  "keywords": ["recipes", "pantry", "meal-kit", "knowledge-graph", "search"],
+  "mcpServers": {
+    "pantrybase": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/pb-server",
+      "args": [],
+      "env": {
+        "PANTRYBASE_PLUGIN_ROOT": "${CLAUDE_PLUGIN_ROOT}",
+        "PANTRYBASE_PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}

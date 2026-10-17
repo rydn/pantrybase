@@ -1,0 +1,20 @@
+#!/bin/sh
+# CLI shim. Follows symlinks (npm link, npm -g, npx) to find the real package root.
+PB_SELF="$0"
+while [ -L "$PB_SELF" ]; do
+  PB_LINK="$(readlink "$PB_SELF")"
+  case "$PB_LINK" in
+    /*) PB_SELF="$PB_LINK" ;;
+    *) PB_SELF="$(dirname "$PB_SELF")/$PB_LINK" ;;
+  esac
+done
+. "$(dirname "$PB_SELF")/_resolve.sh"
+if [ ! -x "$NODE" ]; then
+  echo "pantrybase: node >= 22.12 is required" >&2
+  exit 1
+fi
+if [ -z "$RUN" ]; then
+  # Not installed yet and no deps beside this copy: run from here anyway (npx installs deps).
+  RUN="$DIR"
+fi
+exec "$NODE" "$RUN/dist/cli.js" "$@"

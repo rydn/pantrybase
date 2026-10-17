@@ -1,0 +1,12 @@
+{
+  "name": "pantrybase",
+  "owner": { "name": "Ryan Dick" },
+  "description": "Local-first recipe knowledge base plugin for Claude Code.",
+  "plugins": [
+    {
+      "name": "pantrybase",
+      "source": "./",
+      "description": "Capture recipe cards from photos, search and match recipes to your pantry, and synthesize new ones."
+    }
+  ]
+}

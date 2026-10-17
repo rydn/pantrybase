@@ -19,7 +19,12 @@ export function modelsDir(): string {
 }
 
 export function resolveProjectRoot(given?: string): string {
-  return path.resolve(given ?? process.env.PANTRYBASE_PROJECT_ROOT ?? process.cwd());
+  // Claude Code substitutes ${CLAUDE_PROJECT_DIR} into PANTRYBASE_PROJECT_ROOT for the plugin's
+  // MCP server; an unsubstituted or empty value falls through to the next candidate.
+  const fromEnv = [process.env.PANTRYBASE_PROJECT_ROOT, process.env.CLAUDE_PROJECT_DIR].find(
+    (v) => v && !v.includes("${"),
+  );
+  return path.resolve(given ?? fromEnv ?? process.cwd());
 }
 
 export interface DataPaths {
