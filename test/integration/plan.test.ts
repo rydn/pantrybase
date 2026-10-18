@@ -88,6 +88,41 @@ describe("meal planning", () => {
     expect(suggestRecipes(t.ctx, { plan: ["nope"] }).unknown_slugs).toEqual(["nope"]);
   });
 
+  it("lets sharing with the plan outrank a well-stocked pantry, and can ignore the pantry", () => {
+    // The whole risotto is in the pantry; the veg traybake shares two of three items with the chicken.
+    addToPantry(
+      t.ctx,
+      ["risotto rice", "chestnut mushrooms", "onion", "parmesan"].map((name) => ({ name })),
+    );
+    const empty = suggestRecipes(t.ctx, {});
+    expect(empty.suggestions[0]?.slug).toBe(RISOTTO); // nothing to share with yet: pantry leads
+
+    const r = suggestRecipes(t.ctx, { plan: [CHICKEN] });
+    const [first, second] = r.suggestions;
+    expect(first?.slug).toBe(VEG);
+    expect(second).toMatchObject({ slug: RISOTTO, reuse: 1 }); // still reported as fully covered
+    expect(second?.score).toBeLessThan(first?.score ?? 0);
+
+    const off = suggestRecipes(t.ctx, { plan: [CHICKEN], use_pantry: false });
+    expect(off.suggestions.find((s) => s.slug === RISOTTO)).toMatchObject({
+      reuse: 0,
+      from_pantry: [],
+    });
+    expect(off.plan.from_pantry).toBe(0);
+  });
+
+  it("hides a second copy of a card that is already planned or suggested", () => {
+    saveRecipe(t.ctx, vegTraybake, { allow_duplicate: true });
+    const dupes = t.ctx.store
+      .listRecipes({ limit: 100 })
+      .filter((r) => r.title === "Smoky Veg Traybake");
+    expect(dupes).toHaveLength(2);
+    const r = suggestRecipes(t.ctx, { seed: CHICKEN, limit: 50 });
+    expect(r.suggestions.filter((s) => s.title === "Smoky Veg Traybake")).toHaveLength(1);
+    const planned = suggestRecipes(t.ctx, { plan: [VEG], limit: 50 });
+    expect(planned.suggestions.some((s) => s.title === "Smoky Veg Traybake")).toBe(false);
+  });
+
   it("auto-fills a plan that minimises the whole list", () => {
     const r = autofillPlan(t.ctx, { seed: CHICKEN, count: 2 });
     expect(r.slugs).toHaveLength(3);

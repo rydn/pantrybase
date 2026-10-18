@@ -255,6 +255,7 @@ export interface Suggestion {
   total_min: number | null;
   /** Waste-weighted share of this recipe's required ingredients you already have or are already buying, 0–1. */
   reuse: number;
+  /** Ranking score: like reuse, but once the plan has recipes pantry items count half and repeated dishes are penalised. */
   /** Required ingredients already on the list for another planned recipe. */
   shares: string[];
   from_pantry: string[];
@@ -291,6 +292,11 @@ export interface SuggestOptions {
 }
 
 const VARIETY_PENALTY = 0.15;
+/**
+ * Once the plan has a recipe, pantry coverage counts half as much as sharing with the plan when
+ * ranking: a big pantry would otherwise surface the same pantry-friendly recipes whatever the seed.
+ */
+const PANTRY_FACTOR_WITH_PLAN = 0.5;
 const BEAM_WIDTH = 4;
 const BEAM_FANOUT = 12;
 
@@ -382,6 +388,8 @@ class Planner {
     }
     const w = (rows: RequirementRow[]) => rows.reduce((n, r) => n + wasteWeight(r.category), 0);
     const reuse = p.weight === 0 ? 0 : (w(shares) + w(pantry)) / p.weight;
+    const pantryFactor = s.profiles.length ? PANTRY_FACTOR_WITH_PLAN : 1;
+    const ranked = p.weight === 0 ? 0 : (w(shares) + pantryFactor * w(pantry)) / p.weight;
     const repeated = this.dishesOf(p.id).filter((d) => s.dishes.has(d));
     const penalty = variety ? repeated.length * VARIETY_PENALTY : 0;
     const names = (rows: RequirementRow[]) => [...new Set(rows.map((r) => r.canonical))];
@@ -395,25 +403,35 @@ class Planner {
       new: names(fresh),
       new_cost: Math.round(w(fresh) * 10) / 10,
       repeats: repeated.length ? repeated.join(", ") : undefined,
-      score: reuse - penalty,
+      score: ranked - penalty,
     };
   }
 
   rank(s: State, allowed: Set<number> | null, variety: boolean): Suggestion[] {
     const planned = new Set(s.profiles.map((p) => p.id));
+    const plannedTitles = new Set(s.profiles.map((p) => p.title.toLowerCase()));
     const out: Suggestion[] = [];
     for (const p of this.profiles.values()) {
       if (planned.has(p.id) || p.required.length === 0) continue;
+      if (plannedTitles.has(p.title.toLowerCase())) continue; // a second copy of the same card
       if (allowed && !allowed.has(p.id)) continue;
       out.push(this.evaluate(s, p, variety));
     }
-    return out.sort(
+    out.sort(
       (a, b) =>
         b.score - a.score ||
         a.new.length - b.new.length ||
         b.shares.length - a.shares.length ||
         a.title.localeCompare(b.title),
     );
+    // Collections ingested from photos can hold the same card twice; show it once.
+    const seen = new Set<string>();
+    return out.filter((x) => {
+      const t = x.title.toLowerCase();
+      if (seen.has(t)) return false;
+      seen.add(t);
+      return true;
+    });
   }
 
   objective(s: State, variety: boolean): number {

@@ -9,7 +9,9 @@ export default defineTool({
     "Meal planning around shared ingredients. Given a seed recipe and/or the current plan, ranks recipes by how " +
     "much of their shopping is already covered — `shares` (already on the list for another planned recipe), " +
     "`from_pantry`, and `new` (what they would add). `reuse` is the covered share (0–1), weighted so fresh " +
-    "items count more than dry goods. Repeating a planned dish is penalised unless variety:false. " +
+    "items count more than dry goods. Once the plan has recipes, sharing with the plan outranks pantry coverage; " +
+    "use_pantry:false ignores the pantry entirely (useful with a well-stocked pantry, to see what relates to the " +
+    "planned recipes themselves). Repeating a planned dish is penalised unless variety:false. " +
     "With `auto: n` it instead fills the plan with n more recipes that minimise the whole list (beam search) " +
     "and returns the resulting slugs — save them with pb_plan. Nothing is saved by this tool.",
   schema: {

@@ -91,15 +91,25 @@ export const api = {
     ),
   plan: () => request<PlanView>("GET", "/api/plan"),
   planSet: (items: PlanItem[]) => request<PlanView>("PUT", "/api/plan", { items }),
-  planSuggest: (o: { plan: string[]; seed?: string; variety: boolean; limit?: number } & Filters) =>
+  planSuggest: (
+    o: {
+      plan: string[];
+      seed?: string;
+      variety: boolean;
+      use_pantry: boolean;
+      limit?: number;
+    } & Filters,
+  ) =>
     request<{ plan: PlanSummary; suggestions: Suggestion[] }>(
       "GET",
-      `/api/plan/suggest${qs({ ...filterParams(o), plan: o.plan.join(","), seed: o.seed, variety: o.variety ? undefined : "0", limit: o.limit ?? 12 })}`,
+      `/api/plan/suggest${qs({ ...filterParams(o), plan: o.plan.join(","), seed: o.seed, variety: o.variety ? undefined : "0", use_pantry: o.use_pantry ? undefined : "0", limit: o.limit ?? 12 })}`,
     ),
-  planAutofill: (o: { plan: string[]; count: number; variety: boolean } & Filters) =>
+  planAutofill: (
+    o: { plan: string[]; count: number; variety: boolean; use_pantry: boolean } & Filters,
+  ) =>
     request<{ plan: PlanSummary; slugs: string[]; added: Suggestion[] }>(
       "GET",
-      `/api/plan/suggest${qs({ ...filterParams(o), plan: o.plan.join(","), auto: o.count, variety: o.variety ? undefined : "0" })}`,
+      `/api/plan/suggest${qs({ ...filterParams(o), plan: o.plan.join(","), auto: o.count, variety: o.variety ? undefined : "0", use_pantry: o.use_pantry ? undefined : "0" })}`,
     ),
   shopping: (body: { items?: PlanItem[]; confirmed?: string[]; out_of?: string[] } = {}) =>
     request<ShoppingList>("POST", "/api/plan/shopping", body),

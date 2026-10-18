@@ -38,6 +38,22 @@ export function PlanPage() {
   const loc = useLocation();
   const plan = useAsync(() => api.plan(), []);
   const [variety, setVariety] = useState(true);
+  // Whether suggestions count pantry items as covered; a big pantry can drown out sharing.
+  const [usePantry, setUsePantryState] = useState(() => {
+    try {
+      return localStorage.getItem("plan.usePantry") !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const setUsePantry = (v: boolean) => {
+    setUsePantryState(v);
+    try {
+      localStorage.setItem("plan.usePantry", v ? "1" : "0");
+    } catch {
+      // private mode or blocked storage: the toggle still works for this visit
+    }
+  };
   const [max, setMax] = useState(0);
   const [fill, setFill] = useState(3);
   const [busy, setBusy] = useState(false);
@@ -67,9 +83,14 @@ export function PlanPage() {
   const suggestions = useAsync(
     () =>
       plan.data
-        ? api.planSuggest({ plan: slugs, variety, max_total_min: max || undefined })
+        ? api.planSuggest({
+            plan: slugs,
+            variety,
+            use_pantry: usePantry,
+            max_total_min: max || undefined,
+          })
         : Promise.resolve(undefined),
-    [key, variety, max, Boolean(plan.data)],
+    [key, variety, usePantry, max, Boolean(plan.data)],
   );
   const shopping = useAsync(
     () => (slugs.length ? api.shopping() : Promise.resolve(null)),
@@ -108,6 +129,7 @@ export function PlanPage() {
         plan: slugs,
         count: fill,
         variety,
+        use_pantry: usePantry,
         max_total_min: max || undefined,
       });
       const extra = r.slugs.filter((s) => !slugs.includes(s)).map((slug) => ({ slug }));
@@ -299,6 +321,18 @@ export function PlanPage() {
                   </option>
                 ))}
               </select>
+              <label
+                class="row small"
+                style={{ gap: "0.3rem" }}
+                title="Off: ignore the pantry and rank purely by what each recipe shares with the plan"
+              >
+                <input
+                  type="checkbox"
+                  checked={usePantry}
+                  onChange={(e) => setUsePantry((e.target as HTMLInputElement).checked)}
+                />
+                count my pantry
+              </label>
               <label class="row small" style={{ gap: "0.3rem" }}>
                 <input
                   type="checkbox"
@@ -310,9 +344,19 @@ export function PlanPage() {
             </div>
           </div>
           <p class="muted small">
-            Ranked by how much of each recipe is already covered —{" "}
-            <Chip tone="ok">on your list</Chip> <Chip tone="on">in your pantry</Chip> — fresh items
-            weigh more than dry goods.
+            {usePantry ? (
+              <>
+                Ranked by what each recipe shares with your plan —{" "}
+                <Chip tone="ok">on your list</Chip> — then what's{" "}
+                <Chip tone="on">in your pantry</Chip>; fresh items weigh more than dry goods.
+              </>
+            ) : (
+              <>
+                Ranked only by what each recipe shares with your plan —{" "}
+                <Chip tone="ok">on your list</Chip>. The pantry is ignored here but still counts on
+                the shopping list.
+              </>
+            )}
           </p>
           {suggestions.error && <p class="error small">{suggestions.error}</p>}
           {suggestions.data && suggestions.data.suggestions.length === 0 ? (
