@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { useRoute } from "preact-iso";
+import { useLocation, useRoute } from "preact-iso";
 import { api, fileUrl } from "../api";
 import { Chip, Empty, minutes, pretty, RecipeCard, useAsync } from "../components";
 import type { Ingredient } from "../types";
@@ -22,10 +22,27 @@ function amount(i: Ingredient): string {
 
 export function RecipePage() {
   const { params } = useRoute();
+  const { route } = useLocation();
   const slug = params.slug ?? "";
   const detail = useAsync(() => api.recipe(slug), [slug]);
   const [img, setImg] = useState(0);
   const [busy, setBusy] = useState(false);
+
+  const planAround = async () => {
+    setBusy(true);
+    try {
+      const plan = await api.plan();
+      if (!plan.items.some((i) => i.slug === slug)) {
+        await api.planSet([
+          ...plan.items.map((i) => ({ slug: i.slug, servings: i.servings })),
+          { slug },
+        ]);
+      }
+      route("/plan");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (detail.error) return <Empty>{detail.error}</Empty>;
   const d = detail.data;
@@ -182,6 +199,14 @@ export function RecipePage() {
             )}
           </div>
           {r.description && <p class="muted small">{r.description}</p>}
+          <div class="row">
+            <button type="button" class="primary" disabled={busy} onClick={planAround}>
+              Plan meals around this
+            </button>
+            <span class="muted small">
+              finds recipes that share its ingredients and builds one shopping list
+            </span>
+          </div>
         </div>
       </div>
 

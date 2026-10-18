@@ -140,7 +140,7 @@ export function availableIngredients(
 }
 
 /** Is a recipe line covered by what's available (itself, a printed alternative, or all its components)? */
-function lineAvailable(
+export function lineAvailable(
   ctx: AppContext,
   line: RequirementRow,
   avail: Set<number>,

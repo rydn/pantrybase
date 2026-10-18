@@ -102,6 +102,7 @@ export interface Stats {
   needs_review: number;
   inbox: Record<"pending" | "done" | "skipped" | "failed", number>;
   pantry: number;
+  plan: number;
   data_dir: string;
   embeddings: string;
   version: string;
@@ -160,4 +161,65 @@ export interface GraphEdge {
   target: string;
   kind: "uses" | "tagged" | "derived_from" | "similar" | "parent";
   weight?: number;
+}
+
+// --- meal planning ---
+
+export interface PlanItem {
+  slug: string;
+  servings?: number | null;
+}
+
+export interface PlanSummary {
+  recipes: Array<{ slug: string; title: string; servings?: number | null }>;
+  to_buy: number;
+  from_pantry: number;
+  shared: number;
+  /** 1 − weight(to buy) / weighted demand, 0–1. */
+  reuse: number;
+}
+
+export interface PlanView {
+  items: Array<PlanItem & { recipe: RecipeSummary | null }>;
+  confirmed: string[];
+  summary: PlanSummary;
+}
+
+export interface Suggestion {
+  slug: string;
+  title: string;
+  total_min: number | null;
+  reuse: number;
+  shares: string[];
+  from_pantry: string[];
+  new: string[];
+  new_cost: number;
+  repeats?: string;
+  score: number;
+}
+
+export interface ShoppingLine {
+  canonical: string;
+  amount: string | null;
+  aisle: string;
+  for: string[];
+}
+
+export interface PantryCheck {
+  canonical: string;
+  amount: string | null;
+  for: string[];
+  in_pantry: string | null;
+  confirmed: boolean;
+}
+
+export interface ShoppingList {
+  recipes: Array<{ slug: string; title: string; servings: number | null; scale: number }>;
+  buy: ShoppingLine[];
+  pantry_check: PantryCheck[];
+  needs_confirmation: string[];
+  optional: ShoppingLine[];
+  staples: string[];
+  summary: PlanSummary;
+  removed_from_pantry: string[];
 }

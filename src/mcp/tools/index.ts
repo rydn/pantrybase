@@ -11,6 +11,9 @@ import pb_merge_ingredients from "./pb_merge_ingredients.js";
 import pb_open_ui from "./pb_open_ui.js";
 import { pb_pantry_add, pb_pantry_list, pb_pantry_remove } from "./pb_pantry.js";
 import pb_pantry_match from "./pb_pantry_match.js";
+import pb_plan from "./pb_plan.js";
+import pb_plan_shopping_list from "./pb_plan_shopping_list.js";
+import pb_plan_suggest from "./pb_plan_suggest.js";
 import pb_providers from "./pb_providers.js";
 import pb_rebuild from "./pb_rebuild.js";
 import pb_save_recipe from "./pb_save_recipe.js";
@@ -29,6 +32,10 @@ export const tools: ToolDef[] = [
   pb_pantry_list,
   pb_pantry_add,
   pb_pantry_remove,
+  // meal planning
+  pb_plan_suggest,
+  pb_plan,
+  pb_plan_shopping_list,
   // capture
   pb_providers,
   pb_ingest_source,

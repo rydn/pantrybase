@@ -3,6 +3,7 @@ import { api } from "./api";
 import { useAsync } from "./components";
 import { InboxPage } from "./pages/inbox";
 import { PantryPage } from "./pages/pantry";
+import { PlanPage } from "./pages/plan";
 import { RecipePage } from "./pages/recipe";
 import { SearchPage } from "./pages/search";
 import { TagsPage } from "./pages/tags";
@@ -30,6 +31,7 @@ function Nav() {
       </a>
       {link("/", "Recipes")}
       {link("/pantry", "Pantry")}
+      {link("/plan", "Plan", s?.plan)}
       {link("/graph", "Graph")}
       {link("/inbox", "Inbox", s?.inbox.pending)}
       {link("/tags", "Tags")}
@@ -53,6 +55,7 @@ export function App() {
           <Route path="/" component={SearchPage} />
           <Route path="/recipe/:slug" component={RecipePage} />
           <Route path="/pantry" component={PantryPage} />
+          <Route path="/plan" component={PlanPage} />
           <Route path="/graph" component={GraphPage} />
           <Route path="/inbox" component={InboxPage} />
           <Route path="/tags" component={TagsPage} />

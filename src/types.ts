@@ -271,6 +271,10 @@ export interface RequirementRow {
   ingredient_id: number;
   canonical: string;
   raw: string;
+  qty: number | null;
+  unit: string | null;
+  /** Catalog category of the ingredient (vegetable, herb, dairy…), used for aisles and waste weighting. */
+  category: string | null;
   staple: boolean;
   optional: boolean;
   /** JSON {alternatives?, components?} */

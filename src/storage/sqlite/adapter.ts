@@ -791,8 +791,8 @@ export class SqliteAdapter implements StorageAdapter {
     const where = recipeIds ? `WHERE ri.recipe_id IN (${placeholders(recipeIds.length)})` : "";
     if (recipeIds && recipeIds.length === 0) return [];
     const rows = this.s(
-      `SELECT ri.recipe_id, r.slug, r.title, ri.ingredient_id, i.canonical, ri.raw,
-              (ri.staple OR i.is_staple) AS staple, ri.optional, ri.extra
+      `SELECT ri.recipe_id, r.slug, r.title, ri.ingredient_id, i.canonical, ri.raw, ri.qty, ri.unit,
+              i.category, (ri.staple OR i.is_staple) AS staple, ri.optional, ri.extra
        FROM recipe_ingredients ri
        JOIN ingredients i ON i.id = ri.ingredient_id
        JOIN recipes r ON r.id = ri.recipe_id

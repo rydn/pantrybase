@@ -79,6 +79,9 @@ steps:
 | `pb_search` | Hybrid keyword + semantic search with tag, allergen, time and review filters |
 | `pb_get_recipe` | One recipe, compact or full |
 | `pb_pantry_match` | Recipes ranked by pantry coverage, with what's missing |
+| `pb_plan_suggest` | Meal planning: recipes that share the shopping of a seed recipe or the current plan; `auto: n` fills a plan |
+| `pb_plan` | The saved meal plan (shared with the web UI): get, set, add, remove, servings |
+| `pb_plan_shopping_list` | One grocery list for the plan, by aisle with merged quantities; asks you to confirm the pantry items it relies on |
 | `pb_synthesis_context` | Source recipes and shared patterns for inventing a new recipe |
 | `pb_list_tags` | Tags and facets in use, plus the vocabulary |
 | `pb_pantry_list` / `_add` / `_remove` | Manage the pantry |
@@ -98,6 +101,7 @@ Skills: `/pantrybase:ingest` (capture cards) and `/pantrybase:cook` (find, match
 
 - **Recipes** — search with facets; recipe pages with photos, pantry ticks, steps, nutrition, allergens and lineage
 - **Pantry** — your inventory and *what can I cook*
+- **Plan** — pick a recipe, see which others share its shopping (what's already on the list, what's in the pantry, what each adds), auto-fill a week, confirm the pantry items the plan counts on, and get one grocery list by aisle
 - **Graph** — recipes, ingredients and tags as a navigable network
 - **Inbox** — drag-and-drop photo upload and the extraction queue
 - **Tags** — the whole vocabulary at a glance

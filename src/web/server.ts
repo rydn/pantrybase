@@ -20,6 +20,14 @@ import {
   matchRecipes,
   removeFromPantry,
 } from "../pantry/pantry.js";
+import {
+  autofillPlan,
+  getPlan,
+  type PlanItem,
+  savePlan,
+  shoppingList,
+  suggestRecipes,
+} from "../plan/plan.js";
 import { type SearchMode, searchRecipes } from "../search/hybrid.js";
 import { INGEST_STATUSES, type IngestStatus, type SearchFilters } from "../types.js";
 
@@ -142,6 +150,23 @@ async function thumbnail(abs: string, width: number): Promise<Buffer> {
   return buf;
 }
 
+function planView(ctx: AppContext) {
+  const plan = getPlan(ctx);
+  const ids = plan.items
+    .map((i) => ctx.store.getRecipe(i.slug)?.id)
+    .filter((x): x is number => x !== undefined);
+  const summaries = new Map(ctx.store.summariesByIds(ids).map((s) => [s.slug, s]));
+  const { plan: summary } = suggestRecipes(ctx, {
+    plan: plan.items.map((i) => i.slug),
+    limit: 1,
+  });
+  return {
+    items: plan.items.map((i) => ({ ...i, recipe: summaries.get(i.slug) ?? null })),
+    confirmed: plan.confirmed,
+    summary,
+  };
+}
+
 function routes(ctx: AppContext, version: string): Route[] {
   const r = (method: string, pattern: RegExp, handler: Handler): Route => ({
     method,
@@ -153,6 +178,7 @@ function routes(ctx: AppContext, version: string): Route[] {
       ...ctx.store.stats(),
       inbox: ctx.store.ingestCounts(),
       pantry: listPantry(ctx).length,
+      plan: getPlan(ctx).items.length,
       providers: ctx.providers.list().map((p) => ({ id: p.id, name: p.name })),
       data_dir: ctx.paths.data,
       embeddings: ctx.embedder ? (ctx.embedder.ready ? "ready" : "loading") : "disabled",
@@ -234,6 +260,35 @@ function routes(ctx: AppContext, version: string): Route[] {
         limit: num(p.get("limit")) ?? 30,
         filters: filtersFrom(url),
       });
+    }),
+    // Meal plan: the saved plan plus its summary, with recipe summaries for the UI.
+    r("GET", /^\/api\/plan$/, () => planView(ctx)),
+    r("PUT", /^\/api\/plan$/, async (req) => {
+      const body = await readJson<{ items?: PlanItem[] }>(req);
+      if (!Array.isArray(body.items)) throw new HttpError(400, "items required");
+      savePlan(ctx, { items: body.items, confirmed: getPlan(ctx).confirmed });
+      return planView(ctx);
+    }),
+    r("GET", /^\/api\/plan\/suggest$/, (_req, url) => {
+      const p = url.searchParams;
+      const common = {
+        seed: p.get("seed") ?? undefined,
+        plan: csv(p.get("plan")),
+        variety: p.get("variety") !== "0",
+        use_pantry: p.get("use_pantry") !== "0",
+        filters: filtersFrom(url),
+      };
+      const auto = num(p.get("auto"));
+      if (auto) return autofillPlan(ctx, { ...common, count: auto });
+      return suggestRecipes(ctx, { ...common, limit: num(p.get("limit")) ?? 12 });
+    }),
+    r("POST", /^\/api\/plan\/shopping$/, async (req) => {
+      const body = await readJson<{
+        items?: PlanItem[];
+        confirmed?: string[];
+        out_of?: string[];
+      }>(req);
+      return shoppingList(ctx, body);
     }),
     r("GET", /^\/api\/ingredients$/, (_req, url) =>
       ctx.store.listIngredients({
